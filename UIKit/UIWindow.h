@@ -24,6 +24,7 @@ namespace UIKit
 			Window();
 			~Window();
 
+			virtual void show(bool flag = true);
 			HWND getHandle() const;
 
 			void updateWindow();

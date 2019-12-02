@@ -1,5 +1,5 @@
 #include "UIWindow.h"
-#include "UIApp.h"
+#include "UIConst.h"
 
 namespace UIKit::UI
 {
@@ -35,7 +35,6 @@ namespace UIKit::UI
 			return false;
 
 		UpdateWindow(this->windowHandle);
-		ShowWindow(this->windowHandle, SW_SHOWDEFAULT);
 
 		return true;
 	}
@@ -50,6 +49,15 @@ namespace UIKit::UI
 
 	LRESULT Window::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
+		switch (uMsg)
+		{
+			case WM_UPDATE_AND_RENDER:
+			{
+				this->updateWindow();
+			}
+			return 0;
+		}
+
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
@@ -82,13 +90,16 @@ namespace UIKit::UI
 		: Widget(L"Window", 640.0f, 480.0f)
 	{
 		this->windowClass = this->widgetID;
-		if (this->createWindow())
-			appWindows.push_back(this);
+		this->createWindow();
 	}
 
 	Window::~Window()
 	{
-		removeWindow(this->widgetID);
+	}
+
+	void Window::show(bool flag)
+	{
+		flag ? ShowWindow(this->windowHandle, SW_SHOWDEFAULT) : ShowWindow(this->windowHandle, SW_HIDE);
 	}
 
 	HWND Window::getHandle() const

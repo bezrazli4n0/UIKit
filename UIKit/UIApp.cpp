@@ -1,14 +1,19 @@
 #include "UIApp.h"
 #include "UIWindow.h"
+#include "UIConst.h"
+
 #include <Windows.h>
-#include <algorithm>
 
 namespace UIKit
 {
 	int App::runApp()
 	{
 		MSG msg{};
-		while (this->isRunning)
+
+		DWORD uiNextCall{};
+		const DWORD uiFpsLock{ 1000 / 60 };
+
+		while (this->appRunning)
 		{
 			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 			{
@@ -16,11 +21,27 @@ namespace UIKit
 				DispatchMessage(&msg);
 			}
 
-			// Update window state
-			for (const auto& window : appWindows)
+			// Main-loop
+			DWORD ms = GetTickCount();
+			DWORD msNext = uiNextCall;
+			LONG  lWait{};
+			DWORD dwRet{ WAIT_TIMEOUT };
+
+			if (ms < msNext)
+				lWait = min(static_cast<LONG>(uiFpsLock), static_cast<LONG>(msNext - ms));
+
+			if (lWait <= 1)
 			{
-				//if (msg.hwnd == window->getHandle())
-					window->updateWindow();
+				uiNextCall = ms + uiFpsLock;
+				SendMessage(msg.hwnd, WM_UPDATE_AND_RENDER, 0, 0);
+			}
+			else
+			{
+				if (MsgWaitForMultipleObjects(0, NULL, FALSE, lWait, QS_ALLEVENTS) == WAIT_TIMEOUT)
+				{
+					uiNextCall = GetTickCount() + uiFpsLock;
+					SendMessage(msg.hwnd, WM_UPDATE_AND_RENDER, 0, 0);
+				}
 			}
 		}
 
@@ -29,15 +50,7 @@ namespace UIKit
 
 	void App::exitApp()
 	{
-		this->isRunning = false;
-	}
-
-	void removeWindow(const std::wstring& windowID)
-	{
-		using namespace std;
-		remove_if(begin(appWindows), end(appWindows), [&](UI::Window* window) {
-			return window->getWidgetID() == windowID;
-		});
+		this->appRunning = false;
 	}
 }
 
