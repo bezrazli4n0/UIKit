@@ -1,4 +1,7 @@
+#pragma warning(disable: 4996)
+
 #include "UIGraphics.h"
+#include "UIGraphicsHelper.hpp"
 
 namespace UIKit::Graphics
 {
@@ -16,6 +19,8 @@ namespace UIKit::Graphics
 	{
 		if (!SUCCEEDED(D2D1CreateFactory(D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_SINGLE_THREADED, &pD2D1Factory)))
 			return false;
+
+		pD2D1Factory->GetDesktopDpi(&dpiX, &dpiY);
 
 		static const D3D_FEATURE_LEVEL levelAttempts[] =
 		{

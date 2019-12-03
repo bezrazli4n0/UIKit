@@ -3,6 +3,7 @@
 #include "UIWidget.h"
 #include "UIRenderer.h"
 #include <Windows.h>
+#include <list>
 
 namespace UIKit
 {
@@ -15,12 +16,16 @@ namespace UIKit
 			std::wstring windowClass{}, windowTitle{};
 			WidgetCallback onCloseCallback{};
 			Graphics::Renderer* pRenderer{};
+			std::list<Widget*> windowWidgets{};
 
 		private:
 			bool createWindow();
 			WidgetPoints getCorrectedWindowSize();
+
 			virtual void update();
 			virtual void render();
+			virtual void onMouseUp(const int& xPos, const int& yPos);
+			virtual void onMouseDown(const int& xPos, const int& yPos);
 
 			LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 			static LRESULT CALLBACK WindowProc_(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -43,6 +48,10 @@ namespace UIKit
 			virtual void setPosInDIP(const WidgetPoints& widgetPosDIP);
 			virtual void setPosInPixel(const WidgetPoints&& widgetPos);
 			virtual void setPosInPixel(const WidgetPoints& widgetPos);
+
+			void addWidget(Widget* pWidget);
+			void removeWidget(const std::wstring&& widgetID);
+			void removeWidget(const std::wstring& widgetID);
 
 			virtual void show(bool flag = true);
 			HWND getHandle() const;

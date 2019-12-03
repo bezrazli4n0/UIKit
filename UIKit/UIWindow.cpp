@@ -1,6 +1,7 @@
 #include "UIWindow.h"
 #include "UIConst.h"
 #include "UIGraphicsHelper.hpp"
+#include <algorithm>
 
 namespace UIKit::UI
 {
@@ -60,8 +61,35 @@ namespace UIKit::UI
 		this->pRenderer->getContext()->BeginDraw();
 		this->pRenderer->getContext()->Clear(D2D1::ColorF(D2D1::ColorF::White));
 
+		for (const auto& widget : this->windowWidgets)
+		{
+			if (widget->isVisible())
+			{
+				widget->update();
+				widget->render();
+			}
+		}
+
 		this->pRenderer->getContext()->EndDraw();
 		this->pRenderer->getSwapChain()->Present(1, 0);
+	}
+
+	void Window::onMouseUp(const int& xPos, const int& yPos)
+	{
+		for (const auto& widget : this->windowWidgets)
+		{
+			if (widget->isVisible() && widget->isHandleMouse())
+				widget->onMouseUp(xPos, yPos);
+		}
+	}
+
+	void Window::onMouseDown(const int& xPos, const int& yPos)
+	{
+		for (const auto& widget : this->windowWidgets)
+		{
+			if (widget->isVisible() && widget->isHandleMouse())
+				widget->onMouseDown(xPos, yPos);
+		}
 	}
 
 	LRESULT Window::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -77,6 +105,18 @@ namespace UIKit::UI
 				this->updateWindow();
 
 				EndPaint(hWnd, &ps);
+			}
+			return 0;
+
+			case WM_LBUTTONUP:
+			{
+				this->onMouseUp(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(LOWORD(lParam)))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(HIWORD(lParam)))));
+			}
+			return 0;
+
+			case WM_LBUTTONDOWN:
+			{
+				this->onMouseDown(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(LOWORD(lParam)))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(HIWORD(lParam)))));
 			}
 			return 0;
 
@@ -244,6 +284,37 @@ namespace UIKit::UI
 		this->y = Graphics::pixelToDipY(y);
 
 		SetWindowPos(this->windowHandle, nullptr, static_cast<int>(this->x), static_cast<int>(this->y), 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+	}
+
+	void Window::addWidget(Widget* pWidget)
+	{
+		pWidget->pRT = this->pRenderer->getContext();
+		this->windowWidgets.push_back(pWidget);
+		pWidget->onAttach();
+	}
+
+	void Window::removeWidget(const std::wstring&& widgetID)
+	{
+		this->windowWidgets.erase(std::remove_if(std::begin(this->windowWidgets), std::end(this->windowWidgets), [&widgetID](Widget* pWidget) {
+			if (pWidget->getWidgetID() == widgetID)
+			{
+				pWidget->onDetach();
+				return true;
+			}
+			return false;
+		}));
+	}
+
+	void Window::removeWidget(const std::wstring& widgetID)
+	{
+		this->windowWidgets.erase(std::remove_if(std::begin(this->windowWidgets), std::end(this->windowWidgets), [&widgetID](Widget* pWidget) {
+			if (pWidget->getWidgetID() == widgetID)
+			{
+				pWidget->onDetach();
+				return true;
+			}
+			return false;
+		}));
 	}
 
 	void Window::show(bool flag)

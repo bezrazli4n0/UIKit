@@ -11,6 +11,22 @@ namespace UIKit::UI
 	{
 	}
 
+	void Widget::onAttach()
+	{
+	}
+
+	void Widget::onDetach()
+	{
+	}
+
+	void Widget::onMouseUp(const int& xPos, const int& yPos)
+	{
+	}
+
+	void Widget::onMouseDown(const int& xPos, const int& yPos)
+	{
+	}
+
 	Widget::Widget(const std::wstring&& widgetID, const float&& width, const float&& height, const float&& x, const float&& y)
 		: widgetID(widgetID), width(Graphics::pixelToDipX(width)), height(Graphics::pixelToDipY(height)), x(Graphics::pixelToDipX(x)), y(Graphics::pixelToDipY(y))
 	{

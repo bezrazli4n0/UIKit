@@ -2,6 +2,7 @@
 
 #include <string>
 #include <functional>
+#include <d2d1_1.h>
 
 namespace UIKit
 {
@@ -18,10 +19,17 @@ namespace UIKit
 			float x{}, y{}, width{}, height{};
 			bool visible{ true }, handleMouse{ false }, handleKeyboard{ false };
 			std::wstring widgetID{};
+			ID2D1DeviceContext* pRT{};
 
 		protected:
 			virtual void update();
 			virtual void render();
+
+			virtual void onAttach();
+			virtual void onDetach();
+
+			virtual void onMouseUp(const int& xPos, const int& yPos);
+			virtual void onMouseDown(const int& xPos, const int& yPos);
 
 		public:
 			Widget(const std::wstring&& widgetID, const float&& width = 0.0f, const float&& height = 0.0f, const float&& x = 0.0f, const float&& y = 0.0f);
@@ -50,6 +58,8 @@ namespace UIKit
 			bool isVisible() const;
 			bool isHandleMouse() const;
 			bool isHandleKeyboard() const;
+
+			friend class Window;
 
 		};
 
