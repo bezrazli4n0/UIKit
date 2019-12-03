@@ -13,7 +13,14 @@ namespace UIKit
 	namespace Graphics
 	{
 		template<typename T>
-		inline void SafeRelease(T** ComObj);
+		inline void SafeRelease(T** ComObj)
+		{
+			if ((*ComObj) != nullptr)
+			{
+				(*ComObj)->Release();
+				(*ComObj) = nullptr;
+			}
+		}
 
 		class Core
 		{

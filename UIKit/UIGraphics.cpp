@@ -48,16 +48,6 @@ namespace UIKit::Graphics
 		return true;
 	}
 
-	template<typename T>
-	void SafeRelease(T** ComObj)
-	{
-		if ((*ComObj) != nullptr)
-		{
-			(*ComObj)->Release();
-			(*ComObj) = nullptr;
-		}
-	}
-
 	void Core::freeCore()
 	{
 		SafeRelease(&pD2D1Factory);

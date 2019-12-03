@@ -52,6 +52,7 @@ namespace UIKit
 			bool isHandleKeyboard() const;
 
 		};
-		using WidgetCallback = std::function<void(Widget * pWidget)>;
+
+		using WidgetCallback = std::function<void(Widget* pWidget)>;
 	}
 }

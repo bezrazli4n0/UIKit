@@ -1,5 +1,6 @@
 #include "UIWindow.h"
 #include "UIConst.h"
+#include "UIGraphicsHelper.hpp"
 
 namespace UIKit::UI
 {
@@ -8,7 +9,7 @@ namespace UIKit::UI
 		WNDCLASSEX wc{ sizeof(wc) };
 		wc.cbClsExtra = 0;
 		wc.cbWndExtra = 0;
-		wc.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
+		wc.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
 		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
 		wc.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
@@ -50,22 +51,39 @@ namespace UIKit::UI
 		return WidgetPoints { static_cast<float>(rc.right - rc.left), static_cast<float>(rc.bottom - rc.top) };
 	}
 
+	void Window::update()
+	{
+	}
+
+	void Window::render()
+	{
+		this->pRenderer->getContext()->BeginDraw();
+		this->pRenderer->getContext()->Clear(D2D1::ColorF(D2D1::ColorF::White));
+
+		this->pRenderer->getContext()->EndDraw();
+		this->pRenderer->getSwapChain()->Present(1, 0);
+	}
+
 	LRESULT Window::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (uMsg)
 		{
+			case WM_DISPLAYCHANGE:
 			case WM_PAINT:
 			{
-				this->pRenderer->getContext()->BeginDraw();
-				this->pRenderer->getContext()->Clear(D2D1::ColorF(D2D1::ColorF::Aqua));
+				PAINTSTRUCT ps{};
+				BeginPaint(hWnd, &ps);
 
-				this->pRenderer->getContext()->EndDraw();
-				this->pRenderer->getSwapChain()->Present(1, 0);
+				this->updateWindow();
+
+				EndPaint(hWnd, &ps);
 			}
 			return 0;
 
 			case WM_SIZE:
 			{
+				if (this->pRenderer != nullptr)
+					this->pRenderer->resize();
 			}
 			return 0;
 
@@ -111,8 +129,15 @@ namespace UIKit::UI
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
-	Window::Window()
-		: Widget(L"Window", 640.0f, 480.0f)
+	Window::Window(const std::wstring&& windowClass, const std::wstring&& windowTitle, const unsigned short&& width, const unsigned short&& height, const unsigned short&& x, const unsigned short&& y)
+		: windowClass(windowClass), windowTitle(windowTitle), Widget(windowClass, width, height, x, y)
+	{
+		this->windowClass = this->widgetID;
+		this->createWindow();
+	}
+
+	Window::Window(const std::wstring& windowClass, const std::wstring& windowTitle, const unsigned short& width, const unsigned short& height, const unsigned short& x, const unsigned short& y)
+		: windowClass(windowClass), windowTitle(windowTitle), Widget(windowClass, width, height, x, y)
 	{
 		this->windowClass = this->widgetID;
 		this->createWindow();
@@ -127,8 +152,103 @@ namespace UIKit::UI
 		}
 	}
 
+	const std::wstring& Window::getTitle() const
+	{
+		return this->windowTitle;
+	}
+
+	void Window::setTitle(const std::wstring&& windowTitle)
+	{
+		this->windowTitle = windowTitle;
+		SetWindowText(this->windowHandle, this->windowTitle.c_str());
+	}
+
+	void Window::setTitle(const std::wstring& windowTitle)
+	{
+		this->windowTitle = windowTitle;
+		SetWindowText(this->windowHandle, this->windowTitle.c_str());
+	}
+
+	void Window::setSizeInDIP(const WidgetPoints&& widgetSizeDIP)
+	{
+		auto [width, height] = widgetSizeDIP;
+		this->width = width;
+		this->height = height;
+
+		auto [correctedWidth, correctedHeight] = this->getCorrectedWindowSize();
+		SetWindowPos(this->windowHandle, nullptr, 0, 0, static_cast<int>(correctedWidth), static_cast<int>(correctedHeight), SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE);
+
+	}
+
+	void Window::setSizeInDIP(const WidgetPoints& widgetSizeDIP)
+	{
+		auto [width, height] = widgetSizeDIP;
+		this->width = width;
+		this->height = height;
+
+		auto [correctedWidth, correctedHeight] = this->getCorrectedWindowSize();
+		SetWindowPos(this->windowHandle, nullptr, 0, 0, static_cast<int>(correctedWidth), static_cast<int>(correctedHeight), SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE);
+	}
+
+	void Window::setSizeInPixel(const WidgetPoints&& widgetSize)
+	{
+		auto [width, height] = widgetSize;
+		this->width = Graphics::pixelToDipX(width);
+		this->height = Graphics::pixelToDipY(height);
+
+		auto [correctedWidth, correctedHeight] = this->getCorrectedWindowSize();
+		SetWindowPos(this->windowHandle, nullptr, 0, 0, static_cast<int>(correctedWidth), static_cast<int>(correctedHeight), SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE);
+	}
+
+	void Window::setSizeInPixel(const WidgetPoints& widgetSize)
+	{
+		auto [width, height] = widgetSize;
+		this->width = Graphics::pixelToDipX(width);
+		this->height = Graphics::pixelToDipY(height);
+
+		auto [correctedWidth, correctedHeight] = this->getCorrectedWindowSize();
+		SetWindowPos(this->windowHandle, nullptr, 0, 0, static_cast<int>(correctedWidth), static_cast<int>(correctedHeight), SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE);
+	}
+
+	void Window::setPosInDIP(const WidgetPoints&& widgetPosDIP)
+	{
+		auto [x, y] = widgetPosDIP;
+		this->x = x;
+		this->y = y;
+
+		SetWindowPos(this->windowHandle, nullptr, static_cast<int>(this->x), static_cast<int>(this->y), 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+	}
+
+	void Window::setPosInDIP(const WidgetPoints& widgetPosDIP)
+	{
+		auto [x, y] = widgetPosDIP;
+		this->x = x;
+		this->y = y;
+
+		SetWindowPos(this->windowHandle, nullptr, static_cast<int>(this->x), static_cast<int>(this->y), 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+	}
+
+	void Window::setPosInPixel(const WidgetPoints&& widgetPos)
+	{
+		auto [x, y] = widgetPos;
+		this->x = Graphics::pixelToDipX(x);
+		this->y = Graphics::pixelToDipY(y);
+
+		SetWindowPos(this->windowHandle, nullptr, static_cast<int>(this->x), static_cast<int>(this->y), 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+	}
+
+	void Window::setPosInPixel(const WidgetPoints& widgetPos)
+	{
+		auto [x, y] = widgetPos;
+		this->x = Graphics::pixelToDipX(x);
+		this->y = Graphics::pixelToDipY(y);
+
+		SetWindowPos(this->windowHandle, nullptr, static_cast<int>(this->x), static_cast<int>(this->y), 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+	}
+
 	void Window::show(bool flag)
 	{
+		this->visible = flag;
 		flag ? ShowWindow(this->windowHandle, SW_SHOWDEFAULT) : ShowWindow(this->windowHandle, SW_HIDE);
 	}
 

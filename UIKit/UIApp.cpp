@@ -31,27 +31,29 @@ namespace UIKit
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
-
-			// Main-loop
-			DWORD ms = GetTickCount();
-			DWORD msNext = uiNextCall;
-			LONG  lWait{};
-			DWORD dwRet{ WAIT_TIMEOUT };
-
-			if (ms < msNext)
-				lWait = min(static_cast<LONG>(uiFpsLock), static_cast<LONG>(msNext - ms));
-
-			if (lWait <= 1)
-			{
-				uiNextCall = ms + uiFpsLock;
-				SendMessage(msg.hwnd, WM_UPDATE_AND_RENDER, 0, 0);
-			}
 			else
 			{
-				if (MsgWaitForMultipleObjects(0, NULL, FALSE, lWait, QS_ALLEVENTS) == WAIT_TIMEOUT)
+				// Main-loop
+				DWORD ms = GetTickCount();
+				DWORD msNext = uiNextCall;
+				LONG  lWait{};
+				DWORD dwRet{ WAIT_TIMEOUT };
+
+				if (ms < msNext)
+					lWait = min(static_cast<LONG>(uiFpsLock), static_cast<LONG>(msNext - ms));
+
+				if (lWait <= 1)
 				{
-					uiNextCall = GetTickCount() + uiFpsLock;
+					uiNextCall = ms + uiFpsLock;
 					SendMessage(msg.hwnd, WM_UPDATE_AND_RENDER, 0, 0);
+				}
+				else
+				{
+					if (MsgWaitForMultipleObjects(0, NULL, FALSE, lWait, QS_ALLEVENTS) == WAIT_TIMEOUT)
+					{
+						uiNextCall = GetTickCount() + uiFpsLock;
+						SendMessage(msg.hwnd, WM_UPDATE_AND_RENDER, 0, 0);
+					}
 				}
 			}
 		}

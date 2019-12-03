@@ -18,9 +18,6 @@ namespace UIKit
 			ID2D1Device* pD2D1Device{};
 			ID2D1DeviceContext* pD2D1DeviceContext{};
 
-		private:
-			bool createSwapChain();
-
 		public:
 			Renderer(HWND hWnd);
 			~Renderer();
@@ -29,6 +26,7 @@ namespace UIKit
 
 			bool init();
 			void free();
+			void resize();
 
 		};
 	}
