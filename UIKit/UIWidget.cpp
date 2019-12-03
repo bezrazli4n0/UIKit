@@ -141,4 +141,9 @@ namespace UIKit::UI
 	{
 		return this->handleKeyboard;
 	}
+
+	bool Widget::isHandleTab() const
+	{
+		return this->handleTab;
+	}
 }

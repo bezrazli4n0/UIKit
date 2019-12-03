@@ -15,9 +15,17 @@ namespace UIKit::Graphics
 		return pD2D1Factory;
 	}
 
+	IDWriteFactory* Core::getDWriteFactory()
+	{
+		return pDWriteFactory;
+	}
+
 	bool Core::initCore()
 	{
 		if (!SUCCEEDED(D2D1CreateFactory(D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_SINGLE_THREADED, &pD2D1Factory)))
+			return false;
+
+		if (!SUCCEEDED(DWriteCreateFactory(DWRITE_FACTORY_TYPE::DWRITE_FACTORY_TYPE_ISOLATED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&pDWriteFactory))))
 			return false;
 
 		pD2D1Factory->GetDesktopDpi(&dpiX, &dpiY);
@@ -55,6 +63,7 @@ namespace UIKit::Graphics
 
 	void Core::freeCore()
 	{
+		SafeRelease(&pDWriteFactory);
 		SafeRelease(&pD2D1Factory);
 		SafeRelease(&pD3D11Device);
 	}

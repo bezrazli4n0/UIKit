@@ -136,6 +136,7 @@
     <ClInclude Include="UIConst.h" />
     <ClInclude Include="UIGraphics.h" />
     <ClInclude Include="UIGraphicsHelper.hpp" />
+    <ClInclude Include="UILabel.h" />
     <ClInclude Include="UIRenderer.h" />
     <ClInclude Include="UIWidget.h" />
     <ClInclude Include="UIWindow.h" />
@@ -143,6 +144,7 @@
   <ItemGroup>
     <ClCompile Include="UIApp.cpp" />
     <ClCompile Include="UIGraphics.cpp" />
+    <ClCompile Include="UILabel.cpp" />
     <ClCompile Include="UIRenderer.cpp" />
     <ClCompile Include="UIWidget.cpp" />
     <ClCompile Include="UIWindow.cpp" />

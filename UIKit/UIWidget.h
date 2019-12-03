@@ -17,7 +17,7 @@ namespace UIKit
 		{
 		protected:
 			float x{}, y{}, width{}, height{};
-			bool visible{ true }, handleMouse{ false }, handleKeyboard{ false };
+			bool visible{ true }, handleMouse{ false }, handleKeyboard{ false }, handleTab{ false };
 			std::wstring widgetID{};
 			ID2D1DeviceContext* pRT{};
 
@@ -58,6 +58,7 @@ namespace UIKit
 			bool isVisible() const;
 			bool isHandleMouse() const;
 			bool isHandleKeyboard() const;
+			bool isHandleTab() const;
 
 			friend class Window;
 
