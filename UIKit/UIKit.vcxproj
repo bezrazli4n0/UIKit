@@ -135,12 +135,14 @@
     <ClInclude Include="UIConst.h" />
     <ClInclude Include="UIGraphics.h" />
     <ClInclude Include="UIGraphicsHelper.hpp" />
+    <ClInclude Include="UIRenderer.h" />
     <ClInclude Include="UIWidget.h" />
     <ClInclude Include="UIWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UIApp.cpp" />
     <ClCompile Include="UIGraphics.cpp" />
+    <ClCompile Include="UIRenderer.cpp" />
     <ClCompile Include="UIWidget.cpp" />
     <ClCompile Include="UIWindow.cpp" />
   </ItemGroup>

@@ -1,11 +1,22 @@
 #include "UIApp.h"
 #include "UIWindow.h"
 #include "UIConst.h"
+#include "UIGraphics.h"
 
 #include <Windows.h>
 
 namespace UIKit
 {
+	App::App()
+	{
+		Graphics::Core::initCore();
+	}
+
+	App::~App()
+	{
+		Graphics::Core::freeCore();
+	}
+
 	int App::runApp()
 	{
 		MSG msg{};

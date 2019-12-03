@@ -34,6 +34,9 @@ namespace UIKit::UI
 			!this->windowHandle)
 			return false;
 
+		this->pRenderer = new Graphics::Renderer{ this->windowHandle };
+		this->pRenderer->init();
+
 		UpdateWindow(this->windowHandle);
 
 		return true;
@@ -51,6 +54,28 @@ namespace UIKit::UI
 	{
 		switch (uMsg)
 		{
+			case WM_PAINT:
+			{
+				this->pRenderer->getContext()->BeginDraw();
+				this->pRenderer->getContext()->Clear(D2D1::ColorF(D2D1::ColorF::Aqua));
+
+				this->pRenderer->getContext()->EndDraw();
+				this->pRenderer->getSwapChain()->Present(1, 0);
+			}
+			return 0;
+
+			case WM_SIZE:
+			{
+			}
+			return 0;
+
+			case WM_DESTROY:
+			{
+				if (this->onCloseCallback != nullptr)
+					this->onCloseCallback(this);
+			}
+			return 0;
+
 			case WM_UPDATE_AND_RENDER:
 			{
 				this->updateWindow();
@@ -95,6 +120,11 @@ namespace UIKit::UI
 
 	Window::~Window()
 	{
+		if (this->pRenderer != nullptr)
+		{
+			delete this->pRenderer;
+			this->pRenderer = nullptr;
+		}
 	}
 
 	void Window::show(bool flag)
@@ -105,6 +135,11 @@ namespace UIKit::UI
 	HWND Window::getHandle() const
 	{
 		return this->windowHandle;
+	}
+
+	void Window::onClose(WidgetCallback callback)
+	{
+		this->onCloseCallback = callback;
 	}
 
 	void Window::updateWindow()

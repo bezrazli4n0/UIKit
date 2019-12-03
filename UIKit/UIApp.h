@@ -8,6 +8,9 @@ namespace UIKit
 		bool appRunning{ true };
 
 	public:
+		App();
+		~App();
+
 		int runApp();
 		void exitApp();
 

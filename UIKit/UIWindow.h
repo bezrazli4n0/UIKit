@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UIWidget.h"
+#include "UIRenderer.h"
 #include <Windows.h>
 
 namespace UIKit
@@ -12,6 +13,8 @@ namespace UIKit
 		private:
 			HWND windowHandle{};
 			std::wstring windowClass{}, windowTitle{};
+			WidgetCallback onCloseCallback{};
+			Graphics::Renderer* pRenderer{};
 
 		private:
 			bool createWindow();
@@ -26,6 +29,7 @@ namespace UIKit
 
 			virtual void show(bool flag = true);
 			HWND getHandle() const;
+			void onClose(WidgetCallback callback);
 
 			void updateWindow();
 

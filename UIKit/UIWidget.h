@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <functional>
 
 namespace UIKit
 {
@@ -51,5 +52,6 @@ namespace UIKit
 			bool isHandleKeyboard() const;
 
 		};
+		using WidgetCallback = std::function<void(Widget * pWidget)>;
 	}
 }
