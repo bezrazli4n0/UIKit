@@ -15,6 +15,11 @@ namespace UIKit
 			struct windowOptions
 			{
 				bool centeredWindow{ false }, framelessWindow{ false };
+				struct roundedOptions
+				{
+					int windowRadiusX{ 11 }, windowRadiusY{ 11 };
+					bool roundedWindow{ false };
+				} roundedWindow;
 			};
 
 		private:
@@ -25,6 +30,9 @@ namespace UIKit
 			std::list<Widget*> windowWidgets{};
 			DWORD windowStyle{ WS_OVERLAPPEDWINDOW };
 			bool windowCenter{ false }, windowFrameless{ false };
+			windowOptions::roundedOptions roundedWindow{};
+			D2D1_COLOR_F windowBackgroundColor{ D2D1::ColorF(D2D1::ColorF::White) };
+			HRGN hRoundedRgn{};
 
 		private:
 			bool createWindow();
@@ -56,6 +64,9 @@ namespace UIKit
 			virtual void setPosInDIP(const WidgetPoints& widgetPosDIP);
 			virtual void setPosInPixel(const WidgetPoints&& widgetPos);
 			virtual void setPosInPixel(const WidgetPoints& widgetPos);
+
+			void setBackgroundColor(const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a = 255);
+			void setBackgroundColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a = 255);
 
 			void addWidget(Widget* pWidget);
 			void removeWidget(const std::wstring&& widgetID);

@@ -13,7 +13,7 @@ namespace UIKit::UI
 		WNDCLASSEX wc{ sizeof(wc) };
 		wc.cbClsExtra = 0;
 		wc.cbWndExtra = 0;
-		wc.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
+		wc.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
 		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
 		wc.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
@@ -46,6 +46,12 @@ namespace UIKit::UI
 		this->pRenderer = new Graphics::Renderer{ this->windowHandle };
 		this->pRenderer->init();
 
+		if (this->roundedWindow.roundedWindow)
+		{
+			this->hRoundedRgn = CreateRoundRectRgn(0, 0, static_cast<int>(correctedWidth), static_cast<int>(correctedHeight), this->roundedWindow.windowRadiusX, this->roundedWindow.windowRadiusY);
+			SetWindowRgn(this->windowHandle, this->hRoundedRgn, false);
+		}
+
 		UpdateWindow(this->windowHandle);
 
 		return true;
@@ -66,7 +72,7 @@ namespace UIKit::UI
 	void Window::render()
 	{
 		this->pRenderer->getContext()->BeginDraw();
-		this->pRenderer->getContext()->Clear(D2D1::ColorF(D2D1::ColorF::White));
+		this->pRenderer->getContext()->Clear(this->windowBackgroundColor);
 
 		for (const auto& widget : this->windowWidgets)
 		{
@@ -151,14 +157,25 @@ namespace UIKit::UI
 			}
 			break;
 
+			case WM_LBUTTONDBLCLK:
 			case WM_LBUTTONDOWN:
 			{
 				this->onMouseDown(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(LOWORD(lParam)))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(HIWORD(lParam)))));
 			}
 			return 0;
 
+			case WM_MOVE:
+			{
+				this->x = LOWORD(lParam);
+				this->y = HIWORD(lParam);
+			}
+			return 0;
+
 			case WM_SIZE:
 			{
+				this->width = LOWORD(lParam);
+				this->height = HIWORD(lParam);
+
 				if (this->pRenderer != nullptr)
 					this->pRenderer->resize();
 			}
@@ -213,6 +230,9 @@ namespace UIKit::UI
 		{
 			this->windowCenter = pWindowOptions->centeredWindow;
 			this->windowFrameless = pWindowOptions->framelessWindow;
+			this->roundedWindow.roundedWindow = pWindowOptions->roundedWindow.roundedWindow;
+			this->roundedWindow.windowRadiusX = pWindowOptions->roundedWindow.windowRadiusX;
+			this->roundedWindow.windowRadiusY = pWindowOptions->roundedWindow.windowRadiusY;
 		}
 
 		if (this->windowFrameless)
@@ -229,6 +249,9 @@ namespace UIKit::UI
 		{
 			this->windowCenter = pWindowOptions->centeredWindow;
 			this->windowFrameless = pWindowOptions->framelessWindow;
+			this->roundedWindow.roundedWindow = pWindowOptions->roundedWindow.roundedWindow;
+			this->roundedWindow.windowRadiusX = pWindowOptions->roundedWindow.windowRadiusX;
+			this->roundedWindow.windowRadiusY = pWindowOptions->roundedWindow.windowRadiusY;
 		}
 
 		if (this->windowFrameless)
@@ -241,6 +264,9 @@ namespace UIKit::UI
 	Window::~Window()
 	{
 		UnregisterClass(this->windowClass.c_str(), nullptr);
+
+		if (this->roundedWindow.roundedWindow)
+			DeleteObject(this->hRoundedRgn);
 
 		if (this->pRenderer != nullptr)
 		{
@@ -341,6 +367,16 @@ namespace UIKit::UI
 		this->y = Graphics::pixelToDipY(y);
 
 		SetWindowPos(this->windowHandle, nullptr, static_cast<int>(this->x), static_cast<int>(this->y), 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+	}
+
+	void Window::setBackgroundColor(const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a)
+	{
+		this->windowBackgroundColor = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+	}
+
+	void Window::setBackgroundColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a)
+	{
+		this->windowBackgroundColor = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
 	}
 
 	void Window::addWidget(Widget* pWidget)
