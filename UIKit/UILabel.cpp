@@ -11,7 +11,7 @@ namespace UIKit::UI
 	void Label::render()
 	{
 		IDWriteTextFormat* pTextFormat{};
-		Graphics::Core::getDWriteFactory()->CreateTextFormat(L"Arial", nullptr, DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_REGULAR, DWRITE_FONT_STYLE::DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_NORMAL, Graphics::pixelToDipY(this->fontSize), L"", &pTextFormat);
+		Graphics::Core::getDWriteFactory()->CreateTextFormat(this->fontName.c_str(), nullptr, DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_REGULAR, DWRITE_FONT_STYLE::DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_NORMAL, Graphics::pixelToDipY(this->fontSize), L"", &pTextFormat);
 	
 		pTextFormat->SetTextAlignment(this->horizontalAlign);
 		pTextFormat->SetParagraphAlignment(this->verticalAlign);
@@ -59,6 +59,16 @@ namespace UIKit::UI
 		this->fontSize = fontSize;
 	}
 
+	void Label::setFontName(const std::wstring&& fontName)
+	{
+		this->fontName = fontName;
+	}
+
+	void Label::setFontName(const std::wstring& fontName)
+	{
+		this->fontName = fontName;
+	}
+
 	void Label::setText(const std::wstring text, ...)
 	{
 		va_list args{};
@@ -88,23 +98,23 @@ namespace UIKit::UI
 		this->textColor = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
 	}
 
-	void Label::setTextAlignment(const TextAlignmentHorizontal&& horizontal, const TextAlignmentVertical&& vertical)
+	void Label::setTextAlignment(const hAlign&& horizontal, const vAlign&& vertical)
 	{
 		switch (horizontal)
 		{
-			case TextAlignmentHorizontal::Left:
+			case hAlign::Left:
 			{
 				this->horizontalAlign = { DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_LEADING };
 			}
 			break;
 
-			case TextAlignmentHorizontal::Center:
+			case hAlign::Center:
 			{
 				this->horizontalAlign = { DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER };
 			}
 			break;
 
-			case TextAlignmentHorizontal::Right:
+			case hAlign::Right:
 			{
 				this->horizontalAlign = { DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_TRAILING };
 			}
@@ -113,19 +123,19 @@ namespace UIKit::UI
 
 		switch (vertical)
 		{
-			case TextAlignmentVertical::Top:
+			case vAlign::Top:
 			{
 				this->verticalAlign = { DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_NEAR };
 			}
 			break;
 
-			case TextAlignmentVertical::Center:
+			case vAlign::Center:
 			{
 				this->verticalAlign = { DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER };
 			}
 			break;
 
-			case TextAlignmentVertical::Bottom:
+			case vAlign::Bottom:
 			{
 				this->verticalAlign = { DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_FAR };
 			}
@@ -133,23 +143,23 @@ namespace UIKit::UI
 		}
 	}
 
-	void Label::setTextAlignment(const TextAlignmentHorizontal& horizontal, const TextAlignmentVertical& vertical)
+	void Label::setTextAlignment(const hAlign& horizontal, const vAlign& vertical)
 	{
 		switch (horizontal)
 		{
-			case TextAlignmentHorizontal::Left:
+			case hAlign::Left:
 			{
 				this->horizontalAlign = { DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_LEADING };
 			}
 			break;
 
-			case TextAlignmentHorizontal::Center:
+			case hAlign::Center:
 			{
 				this->horizontalAlign = { DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER };
 			}
 			break;
 
-			case TextAlignmentHorizontal::Right:
+			case hAlign::Right:
 			{
 				this->horizontalAlign = { DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_TRAILING };
 			}
@@ -158,19 +168,19 @@ namespace UIKit::UI
 
 		switch (vertical)
 		{
-			case TextAlignmentVertical::Top:
+			case vAlign::Top:
 			{
 				this->verticalAlign = { DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_NEAR };
 			}
 			break;
 
-			case TextAlignmentVertical::Center:
+			case vAlign::Center:
 			{
 				this->verticalAlign = { DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER };
 			}
 			break;
 
-			case TextAlignmentVertical::Bottom:
+			case vAlign::Bottom:
 			{
 				this->verticalAlign = { DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_FAR };
 			}

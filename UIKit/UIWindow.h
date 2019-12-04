@@ -11,12 +11,20 @@ namespace UIKit
 	{
 		class Window : public Widget
 		{
+		public:
+			struct windowOptions
+			{
+				bool centeredWindow{ false }, framelessWindow{ false };
+			};
+
 		private:
 			HWND windowHandle{};
 			std::wstring windowClass{}, windowTitle{};
 			WidgetCallback onCloseCallback{};
 			Graphics::Renderer* pRenderer{};
 			std::list<Widget*> windowWidgets{};
+			DWORD windowStyle{ WS_OVERLAPPEDWINDOW };
+			bool windowCenter{ false }, windowFrameless{ false };
 
 		private:
 			bool createWindow();
@@ -31,8 +39,8 @@ namespace UIKit
 			static LRESULT CALLBACK WindowProc_(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 		public:
-			Window(const std::wstring&& windowClass, const std::wstring&& windowTitle = { L"UIKit" }, const unsigned short&& width = 640, const unsigned short&& height = 480, const unsigned short&& x = 0, const unsigned short&& y = 0);
-			Window(const std::wstring& windowClass, const std::wstring& windowTitle = { L"UIKit" }, const unsigned short& width = 640, const unsigned short& height = 480, const unsigned short& x = 0, const unsigned short& y = 0);
+			Window(const std::wstring&& windowClass, const std::wstring&& windowTitle = { L"UIKit" }, windowOptions* pWindowOptions = nullptr, const unsigned short&& width = 640, const unsigned short&& height = 480, const unsigned short&& x = 0, const unsigned short&& y = 0);
+			Window(const std::wstring& windowClass, const std::wstring& windowTitle = { L"UIKit" }, windowOptions* pWindowOptions = nullptr, const unsigned short& width = 640, const unsigned short& height = 480, const unsigned short& x = 0, const unsigned short& y = 0);
 			~Window();
 
 			const std::wstring& getTitle() const;

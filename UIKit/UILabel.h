@@ -10,14 +10,14 @@ namespace UIKit
 		class Label : public Widget
 		{
 		public:
-			enum class TextAlignmentHorizontal
+			enum class hAlign
 			{
 				Left,
 				Center,
 				Right
 			};
 
-			enum class TextAlignmentVertical
+			enum class vAlign
 			{
 				Top,
 				Center,
@@ -29,7 +29,7 @@ namespace UIKit
 			virtual void render();
 
 		private:
-			std::wstring labelText{ L"" };
+			std::wstring labelText{ L"" }, fontName{ L"Arial" };
 			float fontSize{};
 			D2D1_COLOR_F textColor{ D2D1::ColorF(D2D1::ColorF::Black) };
 			DWRITE_TEXT_ALIGNMENT horizontalAlign{};
@@ -45,13 +45,16 @@ namespace UIKit
 			void setFontSize(const float&& fontSize);
 			void setFontSize(const float& fontSize);
 
+			void setFontName(const std::wstring&& fontName);
+			void setFontName(const std::wstring& fontName);
+
 			void setText(const std::wstring text, ...);
 
 			void setTextColor(const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a = 255);
 			void setTextColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a = 255);
 
-			void setTextAlignment(const TextAlignmentHorizontal&& horizontal, const TextAlignmentVertical&& vertical);
-			void setTextAlignment(const TextAlignmentHorizontal& horizontal, const TextAlignmentVertical& vertical);
+			void setTextAlignment(const hAlign&& horizontal, const vAlign&& vertical);
+			void setTextAlignment(const hAlign& horizontal, const vAlign& vertical);
 
 		};
 	}

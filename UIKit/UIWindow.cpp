@@ -1,7 +1,10 @@
+#pragma comment(lib, "dwmapi")
+
 #include "UIWindow.h"
 #include "UIConst.h"
 #include "UIGraphicsHelper.hpp"
 #include <algorithm>
+#include <dwmapi.h>
 
 namespace UIKit::UI
 {
@@ -26,15 +29,19 @@ namespace UIKit::UI
 		auto [correctedWidth, correctedHeight] = this->getCorrectedWindowSize();
 
 		if (this->windowHandle = CreateWindowEx(0, this->windowClass.c_str(), this->windowTitle.c_str(),
-			WS_OVERLAPPEDWINDOW,
-			static_cast<int>(this->x),
-			static_cast<int>(this->y),
+			this->windowStyle,
+			this->windowCenter ? (GetSystemMetrics(SM_CXSCREEN) - static_cast<int>(correctedWidth)) / 2 : static_cast<int>(this->x),
+			this->windowCenter ? (GetSystemMetrics(SM_CYSCREEN) - static_cast<int>(correctedHeight)) / 2 : static_cast<int>(this->y),
 			static_cast<int>(correctedWidth),
 			static_cast<int>(correctedHeight),
 			nullptr, nullptr, wc.hInstance, this
 		);
 			!this->windowHandle)
 			return false;
+
+		MARGINS margins{ 0, 0, 0, 1 };
+		DwmExtendFrameIntoClientArea(this->windowHandle, &margins);
+		SetWindowPos(this->windowHandle, nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 
 		this->pRenderer = new Graphics::Renderer{ this->windowHandle };
 		this->pRenderer->init();
@@ -47,7 +54,7 @@ namespace UIKit::UI
 	WidgetPoints Window::getCorrectedWindowSize()
 	{
 		RECT rc{ 0, 0, static_cast<LONG>(this->width), static_cast<LONG>(this->height) };
-		AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, false);
+		AdjustWindowRect(&rc, this->windowStyle, false);
 
 		return WidgetPoints { static_cast<float>(rc.right - rc.left), static_cast<float>(rc.bottom - rc.top) };
 	}
@@ -114,6 +121,36 @@ namespace UIKit::UI
 			}
 			return 0;
 
+			case WM_NCHITTEST:
+			{
+				if (this->windowFrameless)
+				{
+					// Returning HTCAPTION allows the user to move the window around by clicking 
+					// anywhere.
+					// Depending on the mouse coordinates passed in LPARAM, you may 
+					// return other values to enable resizing.
+					//SetWindowLong(hWnd, DWL_MSGRESULT, HTCAPTION);
+					return HTCAPTION;
+				}
+			}
+			break;
+
+			case WM_NCCALCSIZE:
+			{
+				if (this->windowFrameless)
+				{
+					// Returning 0 from the message when wParam is TRUE removes the standard
+					// frame, but keeps the window shadow.
+					if (wParam == TRUE)
+					{
+						SetWindowLong(hWnd, DWL_MSGRESULT, 0);
+						return TRUE;
+					}
+					return FALSE;
+				}
+			}
+			break;
+
 			case WM_LBUTTONDOWN:
 			{
 				this->onMouseDown(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(LOWORD(lParam)))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(HIWORD(lParam)))));
@@ -169,22 +206,42 @@ namespace UIKit::UI
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
-	Window::Window(const std::wstring&& windowClass, const std::wstring&& windowTitle, const unsigned short&& width, const unsigned short&& height, const unsigned short&& x, const unsigned short&& y)
+	Window::Window(const std::wstring&& windowClass, const std::wstring&& windowTitle, windowOptions* pWindowOptions, const unsigned short&& width, const unsigned short&& height, const unsigned short&& x, const unsigned short&& y)
 		: windowClass(windowClass), windowTitle(windowTitle), Widget(windowClass, width, height, x, y)
 	{
+		if (pWindowOptions != nullptr)
+		{
+			this->windowCenter = pWindowOptions->centeredWindow;
+			this->windowFrameless = pWindowOptions->framelessWindow;
+		}
+
+		if (this->windowFrameless)
+			this->windowStyle = WS_POPUP | WS_CAPTION | DS_CENTER;
+
 		this->windowClass = this->widgetID;
 		this->createWindow();
 	}
 
-	Window::Window(const std::wstring& windowClass, const std::wstring& windowTitle, const unsigned short& width, const unsigned short& height, const unsigned short& x, const unsigned short& y)
+	Window::Window(const std::wstring& windowClass, const std::wstring& windowTitle, windowOptions* pWindowOptions, const unsigned short& width, const unsigned short& height, const unsigned short& x, const unsigned short& y)
 		: windowClass(windowClass), windowTitle(windowTitle), Widget(windowClass, width, height, x, y)
 	{
+		if (pWindowOptions != nullptr)
+		{
+			this->windowCenter = pWindowOptions->centeredWindow;
+			this->windowFrameless = pWindowOptions->framelessWindow;
+		}
+
+		if (this->windowFrameless)
+			this->windowStyle = WS_POPUP | WS_CAPTION | DS_CENTER;
+
 		this->windowClass = this->widgetID;
 		this->createWindow();
 	}
 
 	Window::~Window()
 	{
+		UnregisterClass(this->windowClass.c_str(), nullptr);
+
 		if (this->pRenderer != nullptr)
 		{
 			delete this->pRenderer;
