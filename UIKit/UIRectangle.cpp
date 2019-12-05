@@ -10,9 +10,6 @@ namespace UIKit::UI
 
 	void Rectangle::render()
 	{
-		if (this->pBrush == nullptr)
-			this->pRT->CreateSolidColorBrush(this->rectColor, &this->pBrush);
-
 		this->pBrush->SetColor(this->rectColor);
 		if (this->framed)
 			this->pRT->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(std::ceilf(this->x) + Graphics::pixelToDipX(0.5f), std::ceilf(this->y) + Graphics::pixelToDipY(0.5f), std::ceilf(this->x + this->width) + Graphics::pixelToDipX(0.5f), std::ceilf(this->y + this->height) + Graphics::pixelToDipY(0.5f)), this->radiusX, this->radiusY), this->pBrush);
@@ -22,6 +19,7 @@ namespace UIKit::UI
 
 	void Rectangle::onAttach()
 	{
+		Graphics::SafeRelease(&this->pBrush);
 		this->pRT->CreateSolidColorBrush(this->rectColor, &this->pBrush);
 	}
 
@@ -74,12 +72,16 @@ namespace UIKit::UI
 
 	void Rectangle::draw()
 	{
-		this->update();
-		this->render();
+		if (this->isVisible() && this->pRT != nullptr)
+		{
+			this->update();
+			this->render();
+		}
 	}
 
 	void Rectangle::setRT(ID2D1DeviceContext* pRT)
 	{
 		this->pRT = pRT;
+		this->onAttach();
 	}
 }

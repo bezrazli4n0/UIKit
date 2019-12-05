@@ -28,16 +28,21 @@ namespace UIKit
 			virtual void update();
 			virtual void render();
 
+			virtual void onAttach();
+			virtual void onDetach();
+
 		private:
 			std::wstring labelText{ L"" }, fontName{ L"Arial" };
 			float fontSize{};
 			D2D1_COLOR_F textColor{ D2D1::ColorF(D2D1::ColorF::Black) };
 			DWRITE_TEXT_ALIGNMENT horizontalAlign{};
 			DWRITE_PARAGRAPH_ALIGNMENT verticalAlign{};
+			ID2D1SolidColorBrush* pBrush{};
 
 		public:
 			Label(const std::wstring&& labelID, const std::wstring&& labelText = L"Label", const float&& fontSize = 12.0f, const float&& width = 100.0f, const float&& height = 100.0f, const float&& x = 0.0f, const float&& y = 0.0f);
 			Label(const std::wstring& labelID, const std::wstring& labelText = L"Label", const float& fontSize = 12.0f, const float& width = 100.0f, const float& height = 100.0f, const float& x = 0.0f, const float& y = 0.0f);
+			~Label();
 
 			void draw();
 			void setRT(ID2D1DeviceContext* pRT);

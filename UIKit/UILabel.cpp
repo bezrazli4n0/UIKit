@@ -16,13 +16,22 @@ namespace UIKit::UI
 		pTextFormat->SetTextAlignment(this->horizontalAlign);
 		pTextFormat->SetParagraphAlignment(this->verticalAlign);
 
-		ID2D1SolidColorBrush* brush{};
-		this->pRT->CreateSolidColorBrush(this->textColor, &brush);
+		this->pBrush->SetColor(this->textColor);
 
-		this->pRT->DrawText(this->labelText.c_str(), this->labelText.length(), pTextFormat, D2D1::RectF(this->x, this->y, this->x + this->width, this->y + this->height), brush);
+		this->pRT->DrawText(this->labelText.c_str(), this->labelText.length(), pTextFormat, D2D1::RectF(std::ceilf(this->x), std::ceilf(this->y), std::ceilf(this->x + this->width), std::ceilf (this->y + this->height)), this->pBrush);
 
 		Graphics::SafeRelease(&pTextFormat);
-		Graphics::SafeRelease(&brush);
+	}
+
+	void Label::onAttach()
+	{
+		Graphics::SafeRelease(&this->pBrush);
+		this->pRT->CreateSolidColorBrush(this->textColor, &this->pBrush);
+	}
+
+	void Label::onDetach()
+	{
+		Graphics::SafeRelease(&this->pBrush);
 	}
 
 	Label::Label(const std::wstring&& labelID, const std::wstring&& labelText, const float&& fontSize, const float&& width, const float&& height, const float&& x, const float&& y)
@@ -33,6 +42,11 @@ namespace UIKit::UI
 	Label::Label(const std::wstring& labelID, const std::wstring& labelText, const float& fontSize, const float& width, const float& height, const float& x, const float& y)
 		: labelText(labelText), fontSize(fontSize), Widget(labelID, width, height, x, y)
 	{
+	}
+
+	Label::~Label()
+	{
+		Graphics::SafeRelease(&this->pBrush);
 	}
 
 	void Label::draw()
@@ -47,6 +61,7 @@ namespace UIKit::UI
 	void Label::setRT(ID2D1DeviceContext* pRT)
 	{
 		this->pRT = pRT;
+		this->onAttach();
 	}
 
 	void Label::setFontSize(const float&& fontSize)
