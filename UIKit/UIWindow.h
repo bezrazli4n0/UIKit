@@ -42,6 +42,10 @@ namespace UIKit
 			virtual void render();
 			virtual void onMouseUp(const int& xPos, const int& yPos);
 			virtual void onMouseDown(const int& xPos, const int& yPos);
+			virtual void onMouseMove(const int& xPos, const int& yPos);
+			virtual void onMouseScroll(const short& delta);
+			virtual void onChar(UINT32 c);
+			virtual void onKey(UINT32 vk);
 
 			LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 			static LRESULT CALLBACK WindowProc_(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

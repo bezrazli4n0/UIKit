@@ -139,6 +139,7 @@
     <ClInclude Include="UILabel.h" />
     <ClInclude Include="UIRectangle.h" />
     <ClInclude Include="UIRenderer.h" />
+    <ClInclude Include="UITextBox.h" />
     <ClInclude Include="UIWidget.h" />
     <ClInclude Include="UIWindow.h" />
   </ItemGroup>
@@ -148,6 +149,7 @@
     <ClCompile Include="UILabel.cpp" />
     <ClCompile Include="UIRectangle.cpp" />
     <ClCompile Include="UIRenderer.cpp" />
+    <ClCompile Include="UITextBox.cpp" />
     <ClCompile Include="UIWidget.cpp" />
     <ClCompile Include="UIWindow.cpp" />
   </ItemGroup>

@@ -105,6 +105,42 @@ namespace UIKit::UI
 		}
 	}
 
+	void Window::onMouseMove(const int& xPos, const int& yPos)
+	{
+		for (const auto& widget : this->windowWidgets)
+		{
+			if (widget->isVisible() && widget->isHandleMouse())
+				widget->onMouseMove(xPos, yPos);
+		}
+	}
+
+	void Window::onMouseScroll(const short& delta)
+	{
+		for (const auto& widget : this->windowWidgets)
+		{
+			if (widget->isVisible() && widget->isHandleMouse())
+				widget->onMouseScroll(delta);
+		}
+	}
+
+	void Window::onChar(UINT32 c)
+	{
+		for (auto& widget : this->windowWidgets)
+		{
+			if (widget->isVisible() && widget->isHandleKeyboard())
+				widget->onChar(c);
+		}
+	}
+
+	void Window::onKey(UINT32 vk)
+	{
+		for (auto& widget : this->windowWidgets)
+		{
+			if (widget->isVisible() && widget->isHandleKeyboard())
+				widget->onKey(vk);
+		}
+	}
+
 	LRESULT Window::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (uMsg)
@@ -124,6 +160,24 @@ namespace UIKit::UI
 			case WM_LBUTTONUP:
 			{
 				this->onMouseUp(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(LOWORD(lParam)))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(HIWORD(lParam)))));
+			}
+			return 0;
+
+			case WM_MOUSEWHEEL:
+			{
+				this->onMouseScroll(static_cast<short>(HIWORD(wParam)));
+			}
+			return 0;
+
+			case WM_CHAR:
+			{
+				this->onChar(wParam);
+			}
+			return 0;
+
+			case WM_KEYDOWN:
+			{
+				this->onKey(wParam);
 			}
 			return 0;
 
@@ -156,6 +210,12 @@ namespace UIKit::UI
 				}
 			}
 			break;
+
+			case WM_MOUSEMOVE:
+			{
+				this->onMouseMove(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(LOWORD(lParam)))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(HIWORD(lParam)))));
+			}
+			return 0;
 
 			case WM_LBUTTONDBLCLK:
 			case WM_LBUTTONDOWN:

@@ -30,6 +30,10 @@ namespace UIKit
 
 			virtual void onMouseUp(const int& xPos, const int& yPos);
 			virtual void onMouseDown(const int& xPos, const int& yPos);
+			virtual void onMouseMove(const int& xPos, const int& yPos);
+			virtual void onMouseScroll(const short& delta);
+			virtual void onChar(UINT32 c);
+			virtual void onKey(UINT32 vk);
 
 		public:
 			Widget(const std::wstring&& widgetID, const float&& width = 0.0f, const float&& height = 0.0f, const float&& x = 0.0f, const float&& y = 0.0f);
