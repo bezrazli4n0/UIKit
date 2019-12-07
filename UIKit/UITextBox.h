@@ -11,7 +11,8 @@ namespace UIKit
 		class TextBox : public Widget
 		{
 		private:
-			enum class SelectMode {
+			enum class SelectMode
+			{
 				head, tile,
 				lastChar, nextChar,
 				lastWord, nextWord,
@@ -56,15 +57,15 @@ namespace UIKit
 			std::wstring text{ L"" };
 			UINT32 caretAnchor{}, caretPosition{}, lastSelectLength{};
 			IDWriteTextLayout* pTextLayout{};
-			float maxScrollY{}, scrollY{}, lastInputTime{ -1.0f }, lastClickTime{ -1.0f }, fontSize{};
+			float maxScrollY{}, scrollY{}, lastInputTime{ -1.0f }, lastClickTime{ -1.0f }, fontSize{}, scrollX{};
 			ID2D1SolidColorBrush* pBrush{};
-			bool isOnScroll{ }, needUpdate{ true }, isMultiline{};
+			bool isOnScroll{ }, needUpdate{ true }, multiline{ }, readOnly{ };
 			D2D1_MATRIX_3X2_F viewMatrix{};
 			ID2D1RoundedRectangleGeometry* pRoundRectGeometry{};
 
 		public:
-			TextBox(const std::wstring&& textBoxID, const std::wstring&& text = L"TextBox", const bool&& multiline = true, const float&& fontSize = 12.0f, const float&& width = 100.0f, const float&& height = 100.0f, const float&& x = 10.0f, const float&& y = 10.0f);
-			TextBox(const std::wstring& textBoxID, const std::wstring& text = L"TextBox", const bool& multiline = true, const float& fontSize = 12.0f, const float& width = 100.0f, const float& height = 100.0f, const float& x = 10.0f, const float& y = 10.0f);
+			TextBox(const std::wstring&& textBoxID, const std::wstring&& text = L"TextBox", const bool&& isMultiline = false, const bool&& isReadOnly = false, const float&& fontSize = 12.0f, const float&& width = 100.0f, const float&& height = 100.0f, const float&& x = 10.0f, const float&& y = 10.0f);
+			TextBox(const std::wstring& textBoxID, const std::wstring& text = L"TextBox", const bool& isMultiline = false, const bool& isReadOnly = false, const float& fontSize = 12.0f, const float& width = 100.0f, const float& height = 100.0f, const float& x = 10.0f, const float& y = 10.0f);
 			~TextBox();
 
 		};

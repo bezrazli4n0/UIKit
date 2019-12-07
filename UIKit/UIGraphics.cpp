@@ -28,7 +28,7 @@ namespace UIKit::Graphics
 		if (!SUCCEEDED(DWriteCreateFactory(DWRITE_FACTORY_TYPE::DWRITE_FACTORY_TYPE_ISOLATED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&pDWriteFactory))))
 			return false;
 
-		pD2D1Factory->GetDesktopDpi(&dpiX, &dpiY);
+		//pD2D1Factory->GetDesktopDpi(&dpiX, &dpiY);
 
 		static const D3D_FEATURE_LEVEL levelAttempts[] =
 		{

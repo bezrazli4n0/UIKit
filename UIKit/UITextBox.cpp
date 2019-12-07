@@ -1,6 +1,7 @@
 ﻿#include "UITextBox.h"
 #include "UIGraphics.h"
 #include "UIGraphicsHelper.hpp"
+#include <algorithm>
 
 namespace UIKit::UI
 {
@@ -18,6 +19,13 @@ namespace UIKit::UI
 			this->maxScrollY = max(metrics.height - this->height, 0);
 			if (this->scrollY > this->maxScrollY)
 				this->scrollY = this->maxScrollY;
+
+			if (!this->multiline)
+			{
+				auto maxScrollX = max(metrics.width - this->width, 0);
+				if (this->scrollX > maxScrollX)
+ 					this->scrollX = std::ceilf(maxScrollX);
+			}
 		}
 	}
 
@@ -30,11 +38,18 @@ namespace UIKit::UI
 		if (this->scrollY > this->maxScrollY)
 			this->scrollY = this->maxScrollY;
 
+		if (!this->multiline)
+		{
+			auto maxScrollX = max(metrics.width - this->width, 0);
+			if (this->scrollX > maxScrollX)
+				this->scrollX = std::ceilf(maxScrollX);
+		}
+
 		if (this->pTextLayout)
 		{
 			// Debug frame
-			this->pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
-			this->pRT->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(this->x - 5.0f + 0.5f, this->y - 5.0f + 0.5f, this->x + this->width + 5.0f + 0.5f, this->y + this->height + 5.0f + 0.5f), 6.0f, 6.0f), this->pBrush);
+			//this->pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
+			//this->pRT->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(this->x - 5.0f + 0.5f, this->y - 5.0f + 0.5f, this->x + this->width + 5.0f + 0.5f, this->y + this->height + 5.0f + 0.5f), 6.0f, 6.0f), this->pBrush);
 
 			ID2D1Layer* pLayer{};
 			this->pRT->CreateLayer(D2D1::SizeF(this->width, this->height), &pLayer);
@@ -67,7 +82,7 @@ namespace UIKit::UI
 
 	void TextBox::onChar(UINT32 c)
 	{
-		if ((c >= 0x20 || c == 9) && this->active)
+		if ((c >= 0x20 || c == 9) && this->active && !this->readOnly)
 		{
 			this->deleteSelection();
 
@@ -105,56 +120,65 @@ namespace UIKit::UI
 			{
 				case VK_RETURN:
 				{
-					this->deleteSelection();
-					wchar_t chars[3]{};
-					chars[0] = '\n';
-					chars[1] = 0;
-					this->text.insert(this->caretPosition, chars, 1);
+					if (this->multiline && !this->readOnly)
+					{
+						this->deleteSelection();
+						wchar_t chars[3]{};
+						chars[0] = '\n';
+						chars[1] = 0;
+						this->text.insert(this->caretPosition, chars, 1);
 
-					this->caretPosition += 1;
-					this->caretAnchor = this->caretPosition;
+						this->caretPosition += 1;
+						this->caretAnchor = this->caretPosition;
 
-					this->needUpdate = true;
+						this->needUpdate = true;
+					}
 				}
 				break;
 
 				case VK_BACK:
 				{
-					if (this->caretPosition != this->caretAnchor)
-						this->deleteSelection();
-					else if (this->caretPosition > 0)
+					if (!this->readOnly)
 					{
-						UINT32 count = 1;
-						if (this->caretPosition >= 2 && this->caretPosition <= this->text.length())
+						if (this->caretPosition != this->caretAnchor)
+							this->deleteSelection();
+						else if (this->caretPosition > 0)
 						{
-							wchar_t charBackOne = this->text[this->caretPosition - 1];
-							wchar_t charBackTwo = this->text[this->caretPosition - 2];
-							if ((this->IsLowSurrogate(charBackOne) && this->IsHighSurrogate(charBackTwo)) || (charBackOne == '\n' && charBackTwo == '\r'))
-								count = 2;
+							UINT32 count = 1;
+							if (this->caretPosition >= 2 && this->caretPosition <= this->text.length())
+							{
+								wchar_t charBackOne = this->text[this->caretPosition - 1];
+								wchar_t charBackTwo = this->text[this->caretPosition - 2];
+								if ((this->IsLowSurrogate(charBackOne) && this->IsHighSurrogate(charBackTwo)) || (charBackOne == '\n' && charBackTwo == '\r'))
+									count = 2;
+							}
+
+							this->caretPosition -= count;
+							this->caretAnchor = this->caretPosition;
+
+							this->text.erase(this->caretPosition, count);
+							this->needUpdate = true;
 						}
-
-						this->caretPosition -= count;
-						this->caretAnchor = this->caretPosition;
-
-						this->text.erase(this->caretPosition, count);
-						this->needUpdate = true;
 					}
 				}
 				break;
 
 				case VK_DELETE:
 				{
-					if (this->caretPosition != this->caretAnchor)
-						this->deleteSelection();
-					else
+					if (!this->readOnly)
 					{
-						DWRITE_HIT_TEST_METRICS hitTestMetrics{};
-						float caretX{}, caretY{};
+						if (this->caretPosition != this->caretAnchor)
+							this->deleteSelection();
+						else
+						{
+							DWRITE_HIT_TEST_METRICS hitTestMetrics{};
+							float caretX{}, caretY{};
 
-						this->pTextLayout->HitTestTextPosition(this->caretPosition, false, &caretX, &caretY, &hitTestMetrics);
+							this->pTextLayout->HitTestTextPosition(this->caretPosition, false, &caretX, &caretY, &hitTestMetrics);
 
-						this->text.erase(hitTestMetrics.textPosition, hitTestMetrics.length);
-						this->needUpdate = true;
+							this->text.erase(hitTestMetrics.textPosition, hitTestMetrics.length);
+							this->needUpdate = true;
+						}
 					}
 				}
 				break;
@@ -184,13 +208,15 @@ namespace UIKit::UI
 
 				case VK_UP:
 				{
-					this->select(SelectMode::up);
+					if (this->multiline)
+						this->select(SelectMode::up);
 				}
 				break;
 
 				case VK_DOWN:
 				{
-					this->select(SelectMode::down);
+					if (this->multiline)
+						this->select(SelectMode::down);
 				}
 				break;
 
@@ -215,23 +241,26 @@ namespace UIKit::UI
 
 				case VK_INSERT:
 				{
-					if (heldControl)
-						this->copyToClipboard();
-					else if (heldShift)
-						this->pasteFromClipboard();
+					if (!this->readOnly)
+					{
+						if (heldControl)
+							this->copyToClipboard();
+						else if (heldShift)
+							this->pasteFromClipboard();
+					}
 				}
 				break;
 
 				case 'V':
 				{
-					if (heldControl)
+					if (heldControl && !this->readOnly)
 						this->pasteFromClipboard();
 				}
 				break;
 
 				case 'X':
 				{
-					if (heldControl)
+					if (heldControl && !this->readOnly)
 					{
 						this->copyToClipboard();
 						this->deleteSelection();
@@ -281,11 +310,12 @@ namespace UIKit::UI
 		{
 			this->active = false;
 			this->scrollY = 0;
+			this->scrollX = 0;
 		}
 
 		this->isOnScroll = false;
 		this->lastSelectLength = this->getSelectionRange().length;
-		this->setSelectionFromPoint(static_cast<float>(xPos), static_cast<float>(yPos + this->scrollY), (GetKeyState(VK_SHIFT) & 0x80) == 0);
+		this->setSelectionFromPoint(static_cast<float>(xPos + this->scrollX), static_cast<float>(yPos + this->scrollY), (GetKeyState(VK_SHIFT) & 0x80) == 0);
 	}
 
 	void TextBox::onMouseMove(const int& xPos, const int& yPos)
@@ -294,7 +324,7 @@ namespace UIKit::UI
 			SetCursor(LoadCursor(nullptr, IDC_IBEAM));
 
 		if ((GetKeyState(MK_LBUTTON) & 0x100) != 0)
-			this->setSelectionFromPoint(static_cast<float>(xPos), static_cast<float>(yPos + this->scrollY), false);
+			this->setSelectionFromPoint(static_cast<float>(xPos + this->scrollX), static_cast<float>(yPos + this->scrollY), false);
 	}
 
 	void TextBox::onMouseScroll(const int& xPos, const int& yPos, const short& delta)
@@ -405,6 +435,11 @@ namespace UIKit::UI
 				if (memory != nullptr)
 				{
 					this->text.insert(this->caretPosition, ctext, characterCount);
+					if (!this->multiline)
+					{
+						this->text.erase(std::remove(std::begin(this->text), std::end(this->text), '\r'), std::end(this->text));
+						this->text.erase(std::remove(std::begin(this->text), std::end(this->text), '\n'), std::end(this->text));
+					}
 					GlobalUnlock(hClipboardData);
 				}
 			}
@@ -423,10 +458,10 @@ namespace UIKit::UI
 		BOOL isInside{};
 		DWRITE_HIT_TEST_METRICS caretMetrics{};
 
-		x -= this->x;
-		y -= this->y;
+		x -= Graphics::dipToPixelX(this->x);
+		y -= Graphics::dipToPixelY(this->y);
 
-		this->pTextLayout->HitTestPoint(x, y, &isTrailingHit, &isInside, &caretMetrics);
+		this->pTextLayout->HitTestPoint(Graphics::pixelToDipX(x), Graphics::pixelToDipY(y), &isTrailingHit, &isInside, &caretMetrics);
 
 		if (isTrailingHit)
 			this->caretPosition = caretMetrics.textPosition + caretMetrics.length;
@@ -660,11 +695,18 @@ namespace UIKit::UI
 
 		Graphics::Core::getDWriteFactory()->CreateTextFormat(L"", 0,DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, Graphics::pixelToDipY(this->fontSize), L"", &textFormat);
 
+		auto correctedWidth = this->width;
+		if (!this->multiline)
+		{
+			auto rectf = D2D1::InfiniteRect();
+			correctedWidth = rectf.right;
+		}
+
 		Graphics::Core::getDWriteFactory()->CreateTextLayout(
 			this->text.c_str(),
 			static_cast<UINT32>(this->text.length()),
 			textFormat,
-			this->width, this->height,
+			correctedWidth, this->height,
 			&this->pTextLayout
 		);
 
@@ -691,7 +733,7 @@ namespace UIKit::UI
 		{
 			this->pTextLayout->HitTestTextRange(selectedRange.startPosition, selectedRange.length, 0, 0, 0, 0, &actualHitTestCount);
 			std::vector<DWRITE_HIT_TEST_METRICS>hitTestMetrics(actualHitTestCount);
-			this->pTextLayout->HitTestTextRange(selectedRange.startPosition, selectedRange.length, this->x, this->y - this->scrollY, &hitTestMetrics[0], static_cast<UINT32>(hitTestMetrics.size()), &actualHitTestCount);
+			this->pTextLayout->HitTestTextRange(selectedRange.startPosition, selectedRange.length, this->x - this->scrollX, this->y - this->scrollY, &hitTestMetrics[0], static_cast<UINT32>(hitTestMetrics.size()), &actualHitTestCount);
 
 			this->pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::LightSkyBlue));
 			for (UINT32 i = 0; i < actualHitTestCount; i++)
@@ -719,7 +761,7 @@ namespace UIKit::UI
 		caretX = std::ceilf(caretX) + 0.5f;
 		caretY = std::ceilf(caretY) + 0.5f;
 
-		if (!this->isOnScroll)
+		if (!this->isOnScroll && this->multiline)
 		{
 			if (caretY - this->scrollY + caretMetrics.height > this->height)
 				this->scrollY = caretY - this->height + caretMetrics.height;
@@ -727,28 +769,42 @@ namespace UIKit::UI
 				this->scrollY = caretY;
 		}
 
+		if (!this->multiline)
+		{
+			if (caretX - std::ceilf(this->scrollX) + caretMetrics.width > this->width)
+				this->scrollX = std::ceilf(caretX - this->width + caretMetrics.width);
+			else if (caretX - this->scrollX < 0)
+				this->scrollX = caretX - 0.5f;
+		}
+
 		if (sin((timeGetTime() / 1000.f - this->lastInputTime) * 6.28f) > -0.1)
 		{
 			this->pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
-			this->pRT->DrawLine(D2D1::Point2F(this->x + caretX, this->y + caretY - this->scrollY), D2D1::Point2F(this->x + caretX, this->y + caretY + caretMetrics.height - this->scrollY), this->pBrush);
+			if (this->multiline)
+				this->pRT->DrawLine(D2D1::Point2F(this->x + caretX, this->y + caretY - this->scrollY), D2D1::Point2F(this->x + caretX, this->y + caretY + caretMetrics.height - this->scrollY), this->pBrush);
+			else
+				this->pRT->DrawLine(D2D1::Point2F(this->x + caretX - this->scrollX, this->y + caretY), D2D1::Point2F(this->x + caretX - this->scrollX, this->y + caretY + caretMetrics.height), this->pBrush);
 		}
 	}
 
 	void TextBox::drawText()
 	{
 		this->pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
-		this->pRT->DrawTextLayout(D2D1::Point2F(this->x, this->y - this->scrollY), this->pTextLayout, this->pBrush);
+		if (this->multiline)
+			this->pRT->DrawTextLayout(D2D1::Point2F(this->x, this->y - this->scrollY), this->pTextLayout, this->pBrush);
+		else
+			this->pRT->DrawTextLayout(D2D1::Point2F(this->x - this->scrollX, this->y), this->pTextLayout, this->pBrush);
 	}
 
-	TextBox::TextBox(const std::wstring&& textBoxID, const std::wstring&& text, const bool&& multiline, const float&& fontSize, const float&& width, const float&& height, const float&& x, const float&& y)
-		: text{ text }, isMultiline{ multiline }, fontSize{ fontSize }, Widget(textBoxID, width, height, x, y)
+	TextBox::TextBox(const std::wstring&& textBoxID, const std::wstring&& text, const bool&& isMultiline, const bool&& isReadOnly, const float&& fontSize, const float&& width, const float&& height, const float&& x, const float&& y)
+		: text{ text }, multiline{ isMultiline }, readOnly{ isReadOnly }, fontSize{ fontSize }, Widget(textBoxID, width, height, x, y)
 	{
 		this->handleKeyboard = true;
 		this->handleMouse = true;
 	}
 
-	TextBox::TextBox(const std::wstring& textBoxID, const std::wstring& text, const bool& multiline, const float& fontSize, const float& width, const float& height, const float& x, const float& y)
-		: text{ text }, isMultiline{ multiline }, fontSize{ fontSize }, Widget(textBoxID, width, height, x, y)
+	TextBox::TextBox(const std::wstring& textBoxID, const std::wstring& text, const bool& isMultiline, const bool& isReadOnly, const float& fontSize, const float& width, const float& height, const float& x, const float& y)
+		: text{ text }, multiline{ isMultiline }, readOnly{ isReadOnly }, fontSize{ fontSize }, Widget(textBoxID, width, height, x, y)
 	{
 		this->handleKeyboard = true;
 		this->handleMouse = true;
