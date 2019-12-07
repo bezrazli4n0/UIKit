@@ -4,7 +4,7 @@ namespace UIKit
 {
 	namespace Graphics
 	{
-		static float dpiX{ 120.0f }, dpiY{ 120.0f };
+		static float dpiX{ 96.0f }, dpiY{ 96.0f };
 
 		static inline float pixelToDipX(const float x, bool round = false)
 		{

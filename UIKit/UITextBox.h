@@ -60,13 +60,25 @@ namespace UIKit
 			float maxScrollY{}, scrollY{}, lastInputTime{ -1.0f }, lastClickTime{ -1.0f }, fontSize{}, scrollX{};
 			ID2D1SolidColorBrush* pBrush{};
 			bool isOnScroll{ }, needUpdate{ true }, multiline{ }, readOnly{ };
-			D2D1_MATRIX_3X2_F viewMatrix{};
 			ID2D1RoundedRectangleGeometry* pRoundRectGeometry{};
+			D2D1_COLOR_F textColor{ D2D1::ColorF(D2D1::ColorF::Black) };
+			D2D1_COLOR_F caretColor{ D2D1::ColorF(D2D1::ColorF::Black) };
 
 		public:
 			TextBox(const std::wstring&& textBoxID, const std::wstring&& text = L"TextBox", const bool&& isMultiline = false, const bool&& isReadOnly = false, const float&& fontSize = 12.0f, const float&& width = 100.0f, const float&& height = 100.0f, const float&& x = 10.0f, const float&& y = 10.0f);
 			TextBox(const std::wstring& textBoxID, const std::wstring& text = L"TextBox", const bool& isMultiline = false, const bool& isReadOnly = false, const float& fontSize = 12.0f, const float& width = 100.0f, const float& height = 100.0f, const float& x = 10.0f, const float& y = 10.0f);
 			~TextBox();
+
+			void setTextColor(const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a = 255);
+			void setTextColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a = 255);
+
+			void setCaretColor(const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a = 255);
+			void setCaretColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a = 255);
+
+			std::wstring getText() const;
+
+			void setText(const std::wstring&& text);
+			void setText(const std::wstring& text);
 
 		};
 	}

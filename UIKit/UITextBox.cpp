@@ -19,13 +19,6 @@ namespace UIKit::UI
 			this->maxScrollY = max(metrics.height - this->height, 0);
 			if (this->scrollY > this->maxScrollY)
 				this->scrollY = this->maxScrollY;
-
-			if (!this->multiline)
-			{
-				auto maxScrollX = max(metrics.width - this->width, 0);
-				if (this->scrollX > maxScrollX)
- 					this->scrollX = std::ceilf(maxScrollX);
-			}
 		}
 	}
 
@@ -38,22 +31,11 @@ namespace UIKit::UI
 		if (this->scrollY > this->maxScrollY)
 			this->scrollY = this->maxScrollY;
 
-		if (!this->multiline)
-		{
-			auto maxScrollX = max(metrics.width - this->width, 0);
-			if (this->scrollX > maxScrollX)
-				this->scrollX = std::ceilf(maxScrollX);
-		}
-
 		if (this->pTextLayout)
 		{
-			// Debug frame
-			//this->pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
-			//this->pRT->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(this->x - 5.0f + 0.5f, this->y - 5.0f + 0.5f, this->x + this->width + 5.0f + 0.5f, this->y + this->height + 5.0f + 0.5f), 6.0f, 6.0f), this->pBrush);
-
 			ID2D1Layer* pLayer{};
-			this->pRT->CreateLayer(D2D1::SizeF(this->width, this->height), &pLayer);
-			this->pRT->PushLayer(D2D1::LayerParameters(D2D1::RectF(this->x, this->y, this->x + this->width, this->y + this->height)), pLayer);
+			this->pRT->CreateLayer(D2D1::SizeF(this->width + 1.0f, this->height + 1.0f), &pLayer);
+			this->pRT->PushLayer(D2D1::LayerParameters(D2D1::RectF(this->x, this->y, this->x + this->width + 1.0f, this->y + this->height + 1.0f)), pLayer);
 
 			if (this->active)
 			{
@@ -315,7 +297,7 @@ namespace UIKit::UI
 
 		this->isOnScroll = false;
 		this->lastSelectLength = this->getSelectionRange().length;
-		this->setSelectionFromPoint(static_cast<float>(xPos + this->scrollX), static_cast<float>(yPos + this->scrollY), (GetKeyState(VK_SHIFT) & 0x80) == 0);
+		this->setSelectionFromPoint(static_cast<float>(xPos + Graphics::dipToPixelX(this->scrollX)), static_cast<float>(yPos + Graphics::dipToPixelY(this->scrollY)), (GetKeyState(VK_SHIFT) & 0x80) == 0);
 	}
 
 	void TextBox::onMouseMove(const int& xPos, const int& yPos)
@@ -324,14 +306,12 @@ namespace UIKit::UI
 			SetCursor(LoadCursor(nullptr, IDC_IBEAM));
 
 		if ((GetKeyState(MK_LBUTTON) & 0x100) != 0)
-			this->setSelectionFromPoint(static_cast<float>(xPos + this->scrollX), static_cast<float>(yPos + this->scrollY), false);
+			this->setSelectionFromPoint(static_cast<float>(xPos + Graphics::dipToPixelX(this->scrollX)), static_cast<float>(yPos + Graphics::dipToPixelY(this->scrollY)), false);
 	}
 
 	void TextBox::onMouseScroll(const int& xPos, const int& yPos, const short& delta)
 	{
-		// this->checkMouse(static_cast<float>(xPos), static_cast<float>(yPos));
-
-		if (this->active)
+		if (this->active && this->multiline)
 		{
 			this->isOnScroll = true;
 
@@ -758,9 +738,6 @@ namespace UIKit::UI
 		float caretX{}, caretY{};
 		this->pTextLayout->HitTestTextPosition(this->caretPosition, false, &caretX, &caretY, &caretMetrics);
 
-		caretX = std::ceilf(caretX) + 0.5f;
-		caretY = std::ceilf(caretY) + 0.5f;
-
 		if (!this->isOnScroll && this->multiline)
 		{
 			if (caretY - this->scrollY + caretMetrics.height > this->height)
@@ -771,25 +748,25 @@ namespace UIKit::UI
 
 		if (!this->multiline)
 		{
-			if (caretX - std::ceilf(this->scrollX) + caretMetrics.width > this->width)
-				this->scrollX = std::ceilf(caretX - this->width + caretMetrics.width);
+			if (caretX - this->scrollX + caretMetrics.width > this->width)
+				this->scrollX = caretX - this->width + caretMetrics.width;
 			else if (caretX - this->scrollX < 0)
-				this->scrollX = caretX - 0.5f;
+				this->scrollX = caretX;
 		}
 
 		if (sin((timeGetTime() / 1000.f - this->lastInputTime) * 6.28f) > -0.1)
 		{
-			this->pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
+			this->pBrush->SetColor(this->caretColor);
 			if (this->multiline)
-				this->pRT->DrawLine(D2D1::Point2F(this->x + caretX, this->y + caretY - this->scrollY), D2D1::Point2F(this->x + caretX, this->y + caretY + caretMetrics.height - this->scrollY), this->pBrush);
+				this->pRT->DrawLine(D2D1::Point2F(std::ceilf(this->x + caretX) + 0.5f, std::ceilf(this->y + caretY - this->scrollY) + 0.5f), D2D1::Point2F(std::ceilf(this->x + caretX) + 0.5f, std::ceilf(this->y + caretY + caretMetrics.height - this->scrollY) + 0.5f), this->pBrush);
 			else
-				this->pRT->DrawLine(D2D1::Point2F(this->x + caretX - this->scrollX, this->y + caretY), D2D1::Point2F(this->x + caretX - this->scrollX, this->y + caretY + caretMetrics.height), this->pBrush);
+				this->pRT->DrawLine(D2D1::Point2F(std::ceilf(this->x + caretX - this->scrollX) + 0.5f, this->y + caretY), D2D1::Point2F(std::ceilf(this->x + caretX - this->scrollX) + 0.5f, this->y + caretY + caretMetrics.height), this->pBrush);
 		}
 	}
 
 	void TextBox::drawText()
 	{
-		this->pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
+		this->pBrush->SetColor(this->textColor);
 		if (this->multiline)
 			this->pRT->DrawTextLayout(D2D1::Point2F(this->x, this->y - this->scrollY), this->pTextLayout, this->pBrush);
 		else
@@ -815,5 +792,52 @@ namespace UIKit::UI
 		Graphics::SafeRelease(&this->pRoundRectGeometry);
 		Graphics::SafeRelease(&this->pBrush);
 		Graphics::SafeRelease(&this->pTextLayout);
+	}
+
+	void TextBox::setTextColor(const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a)
+	{
+		this->textColor = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+	}
+
+	void TextBox::setTextColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a)
+	{
+		this->textColor = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+	}
+
+	void TextBox::setCaretColor(const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a)
+	{
+		this->caretColor = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+	}
+
+	void TextBox::setCaretColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a)
+	{
+		this->caretColor = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+	}
+
+	std::wstring TextBox::getText() const
+	{
+		return this->text;
+	}
+
+	void TextBox::setText(const std::wstring&& text)
+	{
+		this->text = text;
+		if (!this->multiline)
+		{
+			this->text.erase(std::remove(std::begin(this->text), std::end(this->text), '\r'), std::end(this->text));
+			this->text.erase(std::remove(std::begin(this->text), std::end(this->text), '\n'), std::end(this->text));
+		}
+		this->needUpdate = true;
+	}
+
+	void TextBox::setText(const std::wstring& text)
+	{
+		this->text = text;
+		if (!this->multiline)
+		{
+			this->text.erase(std::remove(std::begin(this->text), std::end(this->text), '\r'), std::end(this->text));
+			this->text.erase(std::remove(std::begin(this->text), std::end(this->text), '\n'), std::end(this->text));
+		}
+		this->needUpdate = true;
 	}
 }
