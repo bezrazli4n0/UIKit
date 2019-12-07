@@ -1,73 +1,75 @@
 ﻿#include "UITextBox.h"
 #include "UIGraphics.h"
+#include "UIGraphicsHelper.hpp"
 
 namespace UIKit::UI
 {
 	void TextBox::update()
 	{
-		if (needUpdate)
+		if (this->needUpdate)
 		{
-			IDWriteTextLayout* temp = createTextLayout(text);
-			if (temp) {
-				needUpdate = false;
-				Graphics::SafeRelease(&textLayout);//释放上一个文本布局
-				textLayout = temp;
-			}
-			//获取文本区域的宽高
-			DWRITE_TEXT_METRICS metrics;
-			textLayout->GetMetrics(&metrics);
+			this->createTextLayout();
+			if (this->pTextLayout)
+				this->needUpdate = false;
 
-			//修改更新后的滚动值
-			maxScrollY = max(metrics.height - height, 0);
-			if (scrollY > maxScrollY)
-				scrollY = maxScrollY;
+			DWRITE_TEXT_METRICS metrics{};
+			this->pTextLayout->GetMetrics(&metrics);
+
+			this->maxScrollY = max(metrics.height - this->height, 0);
+			if (this->scrollY > this->maxScrollY)
+				this->scrollY = this->maxScrollY;
 		}
 	}
 
 	void TextBox::render()
 	{
-		//获取文本区域的宽高
-		DWRITE_TEXT_METRICS metrics;
-		textLayout->GetMetrics(&metrics);
+		DWRITE_TEXT_METRICS metrics{};
+		this->pTextLayout->GetMetrics(&metrics);
 
-		//修改更新后的滚动值
-		maxScrollY = max(metrics.height - height, 0);
-		if (scrollY > maxScrollY)
-			scrollY = maxScrollY;
+		this->maxScrollY = max(metrics.height - this->height, 0);
+		if (this->scrollY > this->maxScrollY)
+			this->scrollY = this->maxScrollY;
 
-		if (this->textLayout)
+		if (this->pTextLayout)
 		{
-			brush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
-			this->pRT->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(this->x - 5.0f + 0.5f, this->y - 5.0f + 0.5f, this->x + this->width + 5.0f + 0.5f, this->y + this->height + 5.0f + 0.5f), 6.0f, 6.0f), this->brush);
+			// Debug frame
+			this->pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
+			this->pRT->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(this->x - 5.0f + 0.5f, this->y - 5.0f + 0.5f, this->x + this->width + 5.0f + 0.5f, this->y + this->height + 5.0f + 0.5f), 6.0f, 6.0f), this->pBrush);
 
 			ID2D1Layer* pLayer{};
 			this->pRT->CreateLayer(D2D1::SizeF(this->width, this->height), &pLayer);
 			this->pRT->PushLayer(D2D1::LayerParameters(D2D1::RectF(this->x, this->y, this->x + this->width, this->y + this->height)), pLayer);
 
-			this->fillSelectedRange();
-			this->drawCaret();
+			if (this->active)
+			{
+				this->fillSelectedRange();
+				this->drawCaret();
+			}
+
 			this->drawText();
 
 			this->pRT->PopLayer();
 			Graphics::SafeRelease(&pLayer);
 		}
-
 	}
 
 	void TextBox::onAttach()
 	{
-		this->pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &this->brush);
+		this->pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &this->pBrush);
+		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x - 5.0f + 0.5f, this->y - 5.0f + 0.5f, this->x + this->width + 5.0f + 0.5f, this->y + this->height + 5.0f + 0.5f), 6.0f, 6.0f), &this->pRoundRectGeometry);
 	}
 
 	void TextBox::onDetach()
 	{
+		Graphics::SafeRelease(&this->pRoundRectGeometry);
+		Graphics::SafeRelease(&this->pBrush);
 	}
 
 	void TextBox::onChar(UINT32 c)
 	{
-		if (c >= 0x20 || c == 9)
+		if ((c >= 0x20 || c == 9) && this->active)
 		{
-			deleteSelection();
+			this->deleteSelection();
 
 			UINT32 charsLength = 1;
 			wchar_t chars[2] = { static_cast<wchar_t>(c), 0 };
@@ -79,192 +81,242 @@ namespace UIKit::UI
 				charsLength++;
 			}
 
-			text.insert(caretPosition, chars, charsLength);
+			this->text.insert(this->caretPosition, chars, charsLength);
 
-			caretPosition += charsLength;
-			caretAnchor = caretPosition;
+			this->caretPosition += charsLength;
+			this->caretAnchor = this->caretPosition;
 
-			needUpdate = true;
-			isOnScroll = false;
+			this->needUpdate = true;
+			this->isOnScroll = false;
 
-			lastInputTime = timeGetTime() / 1000.f;
+			this->lastInputTime = timeGetTime() / 1000.f;
 		}
 	}
 
 	void TextBox::onKey(UINT32 vk)
 	{
-		bool heldShift = (GetKeyState(VK_SHIFT) & 0x80) != 0;
-		bool heldControl = (GetKeyState(VK_CONTROL) & 0x80) != 0;
-		bool heldAlt = (GetKeyState(VK_MENU) & 0x80) != 0;
-
-		switch (vk)
+		if (this->active)
 		{
-		case VK_RETURN:
-			deleteSelection();
-			wchar_t chars[3];
-			chars[0] = '\n';
-			chars[1] = 0;
-			text.insert(caretPosition, chars, 1);
+			bool heldShift = (GetKeyState(VK_SHIFT) & 0x80) != 0;
+			bool heldControl = (GetKeyState(VK_CONTROL) & 0x80) != 0;
+			bool heldAlt = (GetKeyState(VK_MENU) & 0x80) != 0;
 
-			caretPosition += 1;
-			caretAnchor = caretPosition;
-
-			needUpdate = true;
-			break;
-		case VK_BACK:
-
-			if (caretPosition != caretAnchor)
+			switch (vk)
 			{
-				deleteSelection();
-			}
-			else if (caretPosition > 0)
-			{
-				UINT32 count = 1;
-				if (caretPosition >= 2
-					&& caretPosition <= text.length())
+				case VK_RETURN:
 				{
-					wchar_t charBackOne = text[caretPosition - 1];
-					wchar_t charBackTwo = text[caretPosition - 2];
-					if ((IsLowSurrogate(charBackOne) && IsHighSurrogate(charBackTwo))
-						|| (charBackOne == '\n' && charBackTwo == '\r'))
+					this->deleteSelection();
+					wchar_t chars[3]{};
+					chars[0] = '\n';
+					chars[1] = 0;
+					this->text.insert(this->caretPosition, chars, 1);
+
+					this->caretPosition += 1;
+					this->caretAnchor = this->caretPosition;
+
+					this->needUpdate = true;
+				}
+				break;
+
+				case VK_BACK:
+				{
+					if (this->caretPosition != this->caretAnchor)
+						this->deleteSelection();
+					else if (this->caretPosition > 0)
 					{
-						count = 2;
+						UINT32 count = 1;
+						if (this->caretPosition >= 2 && this->caretPosition <= this->text.length())
+						{
+							wchar_t charBackOne = this->text[this->caretPosition - 1];
+							wchar_t charBackTwo = this->text[this->caretPosition - 2];
+							if ((this->IsLowSurrogate(charBackOne) && this->IsHighSurrogate(charBackTwo)) || (charBackOne == '\n' && charBackTwo == '\r'))
+								count = 2;
+						}
+
+						this->caretPosition -= count;
+						this->caretAnchor = this->caretPosition;
+
+						this->text.erase(this->caretPosition, count);
+						this->needUpdate = true;
 					}
 				}
+				break;
 
-				caretPosition -= count;
-				caretAnchor = caretPosition;
+				case VK_DELETE:
+				{
+					if (this->caretPosition != this->caretAnchor)
+						this->deleteSelection();
+					else
+					{
+						DWRITE_HIT_TEST_METRICS hitTestMetrics{};
+						float caretX{}, caretY{};
 
-				text.erase(caretPosition, count);
-				needUpdate = true;
+						this->pTextLayout->HitTestTextPosition(this->caretPosition, false, &caretX, &caretY, &hitTestMetrics);
 
-			}
-			break;
-		case VK_DELETE:
-			if (caretPosition != caretAnchor) {
-				deleteSelection();
-			}
-			else {
-				DWRITE_HIT_TEST_METRICS hitTestMetrics;
-				float caretX, caretY;
+						this->text.erase(hitTestMetrics.textPosition, hitTestMetrics.length);
+						this->needUpdate = true;
+					}
+				}
+				break;
 
-				textLayout->HitTestTextPosition(
-					caretPosition,
-					false,
-					&caretX,
-					&caretY,
-					&hitTestMetrics
-				);
+				case VK_TAB:
+				{
+				}
+				break;
 
-				text.erase(hitTestMetrics.textPosition, hitTestMetrics.length);
-				needUpdate = true;
+				case VK_LEFT:
+				{
+					if (!heldControl)
+						this->select(SelectMode::lastChar, !heldShift);
+					else
+						this->select(SelectMode::lastWord, !heldShift);
+				}
+				break;
 
-			}
-			break;
-		case VK_TAB:
-			break;
-		case VK_LEFT:
-			if (!heldControl)
-				select(SelectMode::lastChar, !heldShift);
-			else
-				select(SelectMode::lastWord, !heldShift);
-			break;
+				case VK_RIGHT:
+				{
+					if (!heldControl)
+						this->select(SelectMode::nextChar, !heldShift);
+					else
+						this->select(SelectMode::nextWord, !heldShift);
+				}
+				break;
 
-		case VK_RIGHT:
-			if (!heldControl)
-				select(SelectMode::nextChar, !heldShift);
-			else
-				select(SelectMode::nextWord, !heldShift);
-			break;
-		case VK_UP:
-			select(SelectMode::up);
-			break;
-		case VK_DOWN:
-			select(SelectMode::down);
-			break;
-		case VK_HOME:
-			select(SelectMode::head);
-			break;
-		case VK_END:
-			select(SelectMode::tile);
-			break;
-		case 'C':
-			if (heldControl)
-				copyToClipboard();
-			break;
-		case VK_INSERT:
-			if (heldControl)
-				copyToClipboard();
-			else if (heldShift) {
-				pasteFromClipboard();
+				case VK_UP:
+				{
+					this->select(SelectMode::up);
+				}
+				break;
+
+				case VK_DOWN:
+				{
+					this->select(SelectMode::down);
+				}
+				break;
+
+				case VK_HOME:
+				{
+					this->select(SelectMode::head);
+				}
+				break;
+
+				case VK_END:
+				{
+					this->select(SelectMode::tile);
+				}
+				break;
+
+				case 'C':
+				{
+					if (heldControl)
+						this->copyToClipboard();
+				}
+				break;
+
+				case VK_INSERT:
+				{
+					if (heldControl)
+						this->copyToClipboard();
+					else if (heldShift)
+						this->pasteFromClipboard();
+				}
+				break;
+
+				case 'V':
+				{
+					if (heldControl)
+						this->pasteFromClipboard();
+				}
+				break;
+
+				case 'X':
+				{
+					if (heldControl)
+					{
+						this->copyToClipboard();
+						this->deleteSelection();
+					}
+				}
+				break;
+
+				case 'A':
+				{
+					if (heldControl)
+						this->select(SelectMode::all);
+				}
+				break;
+
+				default:
+					return;
 			}
-			break;
-		case 'V':
-			if (heldControl) {
-				pasteFromClipboard();
-			}
-			break;
-		case 'X':
-			//剪切文本，先复制再删除
-			if (heldControl) {
-				copyToClipboard();
-				deleteSelection();
-			}
-			break;
-		case 'A':
-			if (heldControl) {
-				select(SelectMode::all);
-			}
-			break;
-		default:
-			return;
+
+			this->isOnScroll = false;
+			this->lastInputTime = timeGetTime() / 1000.f;
 		}
-		isOnScroll = false;
-		lastInputTime = timeGetTime() / 1000.f;
 	}
 
 	void TextBox::onMouseUp(const int& xPos, const int& yPos)
 	{
+		if (this->checkMouse(static_cast<float>(xPos), static_cast<float>(yPos)))
+			SetCursor(LoadCursor(nullptr, IDC_IBEAM));
+
 		float time = timeGetTime() / 1000.f;
 		const float doubleClickInterval = 0.3f;
 
-		if (time - lastClickTime < doubleClickInterval) {
+		if (time - this->lastClickTime < doubleClickInterval)
 			if (lastSelectLength == 0)
-				select(SelectMode::all);
-		}
-		lastClickTime = time;
+				this->select(SelectMode::all);
+
+		this->lastClickTime = time;
 	}
 
 	void TextBox::onMouseDown(const int& xPos, const int& yPos)
 	{
-		//float xP{ xPos }, yPos{ yPos };
-		isOnScroll = false;
-		lastSelectLength = getSelectionRange().length;
-		setSelectionFromPoint(static_cast<float>(xPos), static_cast<float>(yPos + scrollY), (GetKeyState(VK_SHIFT) & 0x80) == 0);
+		if (this->checkMouse(static_cast<float>(xPos), static_cast<float>(yPos)))
+		{
+			this->active = true;
+			SetCursor(LoadCursor(nullptr, IDC_IBEAM));
+		}
+		else
+		{
+			this->active = false;
+			this->scrollY = 0;
+		}
+
+		this->isOnScroll = false;
+		this->lastSelectLength = this->getSelectionRange().length;
+		this->setSelectionFromPoint(static_cast<float>(xPos), static_cast<float>(yPos + this->scrollY), (GetKeyState(VK_SHIFT) & 0x80) == 0);
 	}
 
 	void TextBox::onMouseMove(const int& xPos, const int& yPos)
 	{
+		if (this->checkMouse(static_cast<float>(xPos), static_cast<float>(yPos)))
+			SetCursor(LoadCursor(nullptr, IDC_IBEAM));
+
 		if ((GetKeyState(MK_LBUTTON) & 0x100) != 0)
-			setSelectionFromPoint(static_cast<float>(xPos), static_cast<float>(yPos + scrollY), false);
+			this->setSelectionFromPoint(static_cast<float>(xPos), static_cast<float>(yPos + this->scrollY), false);
 	}
 
-	void TextBox::onMouseScroll(const short& delta)
+	void TextBox::onMouseScroll(const int& xPos, const int& yPos, const short& delta)
 	{
-		isOnScroll = true;
+		// this->checkMouse(static_cast<float>(xPos), static_cast<float>(yPos));
 
-		//滚动事件发生不意味着滚动值改变
+		if (this->active)
+		{
+			this->isOnScroll = true;
 
-		float nextScroll = scrollY - delta;
+			float nextScroll = this->scrollY - delta;
 
-		if (nextScroll < 0)
-			nextScroll = 0;
-		else if (nextScroll > maxScrollY)
-			nextScroll = maxScrollY;
+			if (nextScroll < 0)
+				nextScroll = 0;
+			else if (nextScroll > this->maxScrollY)
+				nextScroll = this->maxScrollY;
 
-		if (nextScroll != scrollY) {
-			scrollY = nextScroll;
-			needUpdate = true;
+			if (nextScroll != this->scrollY)
+			{
+				this->scrollY = nextScroll;
+				this->needUpdate = true;
+			}
 		}
 	}
 
@@ -283,32 +335,34 @@ namespace UIKit::UI
 		if (caretEnd > textLength)
 			caretEnd = textLength;
 
-		return { caretBegin,caretEnd - caretBegin };
+		return { caretBegin, caretEnd - caretBegin };
 	}
 
 	void TextBox::copyToClipboard()
 	{
-		DWRITE_TEXT_RANGE selectionRange = getSelectionRange();
+		DWRITE_TEXT_RANGE selectionRange = this->getSelectionRange();
 		if (selectionRange.length <= 0)
 			return;
 
-		if (OpenClipboard(0)) {
-			if (EmptyClipboard()) {
-
+		if (OpenClipboard(0))
+		{
+			if (EmptyClipboard())
+			{
 				size_t byteSize = sizeof(wchar_t) * (selectionRange.length + 1);
 				HGLOBAL hClipboardData = GlobalAlloc(GMEM_DDESHARE | GMEM_ZEROINIT, byteSize);
 
-				if (hClipboardData != NULL) {
+				if (hClipboardData != nullptr)
+				{
 					void* memory = GlobalLock(hClipboardData);
 
-					if (memory != NULL) {
+					if (memory != nullptr)
+					{
 						const wchar_t* ctext = this->text.c_str();
 						memcpy(memory, &ctext[selectionRange.startPosition], byteSize);
 						GlobalUnlock(hClipboardData);
 
-						if (SetClipboardData(CF_UNICODETEXT, hClipboardData) != NULL) {
+						if (SetClipboardData(CF_UNICODETEXT, hClipboardData) != NULL)
 							hClipboardData = NULL;
-						}
 					}
 					GlobalFree(hClipboardData);
 				}
@@ -319,7 +373,7 @@ namespace UIKit::UI
 
 	void TextBox::deleteSelection()
 	{
-		DWRITE_TEXT_RANGE range = getSelectionRange();
+		DWRITE_TEXT_RANGE range = this->getSelectionRange();
 
 		if (range.length <= 0)
 			return;
@@ -327,9 +381,9 @@ namespace UIKit::UI
 		this->text.erase(range.startPosition, range.length);
 
 		this->caretPosition = range.startPosition;
-		this->caretAnchor = caretPosition;
+		this->caretAnchor = this->caretPosition;
 
-		needUpdate = true;
+		this->needUpdate = true;
 	}
 
 	void TextBox::pasteFromClipboard()
@@ -341,276 +395,251 @@ namespace UIKit::UI
 		if (OpenClipboard(0)) {
 			HGLOBAL hClipboardData = GetClipboardData(CF_UNICODETEXT);
 
-			if (hClipboardData != NULL)
+			if (hClipboardData != nullptr)
 			{
-				// Get text and size of text.
 				size_t byteSize = GlobalSize(hClipboardData);
-				void* memory = GlobalLock(hClipboardData); // [byteSize] in bytes
+				void* memory = GlobalLock(hClipboardData);
 				const wchar_t* ctext = reinterpret_cast<const wchar_t*>(memory);
 				characterCount = static_cast<UINT32>(wcsnlen(ctext, byteSize / sizeof(wchar_t)));
 
-				if (memory != NULL)
+				if (memory != nullptr)
 				{
-					// Insert the text at the current position.
-					this->text.insert(
-						caretPosition,
-						ctext,
-						characterCount
-					);
-
+					this->text.insert(this->caretPosition, ctext, characterCount);
 					GlobalUnlock(hClipboardData);
-
 				}
 			}
 			CloseClipboard();
 		}
 
 		this->caretPosition += characterCount;
-		this->caretAnchor = caretPosition;
+		this->caretAnchor = this->caretPosition;
 
-		needUpdate = true;
+		this->needUpdate = true;
 	}
 
 	void TextBox::setSelectionFromPoint(float x, float y, bool moveAnchor)
 	{
-		BOOL isTrailingHit;
-		BOOL isInside;
-		DWRITE_HIT_TEST_METRICS caretMetrics;
+		BOOL isTrailingHit{};
+		BOOL isInside{};
+		DWRITE_HIT_TEST_METRICS caretMetrics{};
 
 		x -= this->x;
 		y -= this->y;
 
-		this->textLayout->HitTestPoint(
-			x, y,
-			&isTrailingHit,
-			&isInside,
-			&caretMetrics
-		);
+		this->pTextLayout->HitTestPoint(x, y, &isTrailingHit, &isInside, &caretMetrics);
 
 		if (isTrailingHit)
 			this->caretPosition = caretMetrics.textPosition + caretMetrics.length;
-
 		else
 			this->caretPosition = caretMetrics.textPosition;
 
 		if (moveAnchor)
-			this->caretAnchor = caretPosition;
+			this->caretAnchor = this->caretPosition;
 	}
 
 	void TextBox::select(SelectMode mode, bool moveAnchor)
 	{
 		switch (mode)
 		{
-		case SelectMode::up:
-		case SelectMode::down:
-		{
-			std::vector<DWRITE_LINE_METRICS> lineMetrics;
-			DWRITE_TEXT_METRICS textMetrics;
-			textLayout->GetMetrics(&textMetrics);
-
-			lineMetrics.resize(textMetrics.lineCount);
-			textLayout->GetLineMetrics(&lineMetrics.front(), textMetrics.lineCount, &textMetrics.lineCount);
-
-			UINT32 line = 0;
-			UINT32 linePosition = 0;
-			UINT32 nextLinePosition = 0;
-			UINT32 lineCount = static_cast<UINT32>(lineMetrics.size());
-			for (; line < lineCount; ++line)
+			case SelectMode::up:
+			case SelectMode::down:
 			{
-				linePosition = nextLinePosition;
-				nextLinePosition = linePosition + lineMetrics[line].length;
-				if (nextLinePosition > caretPosition) {
-					break;
-				}
-			}
+				std::vector<DWRITE_LINE_METRICS> lineMetrics{};
+				DWRITE_TEXT_METRICS textMetrics{};
+				this->pTextLayout->GetMetrics(&textMetrics);
 
-			if (line > lineCount - 1) {
-				line = lineCount - 1;
-			}
+				lineMetrics.resize(textMetrics.lineCount);
+				this->pTextLayout->GetLineMetrics(&lineMetrics.front(), textMetrics.lineCount, &textMetrics.lineCount);
 
-			if (mode == SelectMode::up)
-			{
-				if (line <= 0)
-					break;
-				line--;
-				linePosition -= lineMetrics[line].length;
-			}
-			else
-			{
-				linePosition += lineMetrics[line].length;
-				line++;
-				if (line >= lineMetrics.size())
-					break;
-			}
-
-			DWRITE_HIT_TEST_METRICS hitTestMetrics;
-			float caretX, caretY, dummyX;
-
-			textLayout->HitTestTextPosition(
-				caretPosition,
-				false,
-				&caretX,
-				&caretY,
-				&hitTestMetrics
-			);
-
-			textLayout->HitTestTextPosition(
-				linePosition,
-				false,
-				&dummyX,
-				&caretY,
-				&hitTestMetrics
-			);
-
-			BOOL isInside, isTrailingHit;
-			textLayout->HitTestPoint(
-				caretX,
-				caretY,
-				&isTrailingHit,
-				&isInside,
-				&hitTestMetrics
-			);
-
-			caretPosition = hitTestMetrics.textPosition;
-
-			if (isTrailingHit) {
-				caretPosition += hitTestMetrics.length;
-			}
-			break;
-		}
-		case SelectMode::head:
-			caretPosition = 0;
-			break;
-		case SelectMode::tile:
-			caretPosition = text.length();
-			break;
-		case SelectMode::lastChar:
-			if (caretPosition > 0) {
-				UINT32 moveCount = 1;
-
-				if (caretPosition >= 2
-					&& caretPosition <= text.length())
+				UINT32 line = 0;
+				UINT32 linePosition = 0;
+				UINT32 nextLinePosition = 0;
+				UINT32 lineCount = static_cast<UINT32>(lineMetrics.size());
+				for (; line < lineCount; ++line)
 				{
-					if (isUnicodeUnit(text[caretPosition - 1], text[caretPosition - 2]))
-					{
-						moveCount = 2;
-					}
+					linePosition = nextLinePosition;
+					nextLinePosition = linePosition + lineMetrics[line].length;
+					if (nextLinePosition > this->caretPosition)
+						break;
 				}
-				if (caretPosition < (UINT32)moveCount)
-					caretPosition = 0;
-				else caretPosition -= moveCount;
-			}
-			break;
-		case SelectMode::nextChar:
-			if (caretPosition < text.length()) {
-				UINT32 moveCount = 1;
-				if (caretPosition >= 0
-					&& caretPosition <= text.length() - 2)
+
+				if (line > lineCount - 1)
+					line = lineCount - 1;
+
+				if (mode == SelectMode::up)
 				{
-					wchar_t charBackOne = text[caretPosition];
-					wchar_t charBackTwo = text[caretPosition + 1];
-					if (isUnicodeUnit(text[caretPosition], text[caretPosition + 1]))
-					{
-						moveCount = 2;
-					}
-				}
-				if (caretPosition > text.length())
-					caretPosition = text.length();
-				else caretPosition += moveCount;
-			}
-			break;
-		case SelectMode::lastWord:
-		case SelectMode::nextWord: {
-			std::vector<DWRITE_CLUSTER_METRICS> clusterMetrics;
-			UINT32 clusterCount;
-			textLayout->GetClusterMetrics(NULL, 0, &clusterCount);
-			if (clusterCount == 0)
-				break;
-
-			clusterMetrics.resize(clusterCount);
-			textLayout->GetClusterMetrics(&clusterMetrics.front(), clusterCount, &clusterCount);
-
-			UINT32 clusterPosition = 0;
-			UINT32 oldCaretPosition = caretPosition;
-
-			if (mode == SelectMode::lastWord) {
-
-				caretPosition = 0;
-				for (UINT32 cluster = 0; cluster < clusterCount; ++cluster) {
-
-					clusterPosition += clusterMetrics[cluster].length;
-					if (clusterMetrics[cluster].canWrapLineAfter) {
-						if (clusterPosition >= oldCaretPosition)
-							break;
-
-						caretPosition = clusterPosition;
-					}
-
-				}
-
-			}
-			else {
-				for (UINT32 cluster = 0; cluster < clusterCount; ++cluster) {
-					UINT32 clusterLength = clusterMetrics[cluster].length;
-
-					if (clusterPosition + clusterMetrics[cluster].length > oldCaretPosition&& clusterMetrics[cluster].canWrapLineAfter) {
-						caretPosition = clusterPosition + clusterMetrics[cluster].length;
+					if (line <= 0)
 						break;
 
+					line--;
+					linePosition -= lineMetrics[line].length;
+				}
+				else
+				{
+					linePosition += lineMetrics[line].length;
+					line++;
+					if (line >= lineMetrics.size())
+						break;
+				}
+
+				DWRITE_HIT_TEST_METRICS hitTestMetrics{};
+				float caretX{}, caretY{}, dummyX{};
+
+				this->pTextLayout->HitTestTextPosition(this->caretPosition, false, &caretX, &caretY, &hitTestMetrics);
+				this->pTextLayout->HitTestTextPosition(linePosition, false, &dummyX, &caretY, &hitTestMetrics);
+
+				BOOL isInside{}, isTrailingHit{};
+				this->pTextLayout->HitTestPoint(caretX, caretY, &isTrailingHit, &isInside, &hitTestMetrics);
+
+				this->caretPosition = hitTestMetrics.textPosition;
+
+				if (isTrailingHit)
+					this->caretPosition += hitTestMetrics.length;
+			}
+			break;
+
+			case SelectMode::head:
+			{
+				this->caretPosition = 0;
+			}
+			break;
+
+			case SelectMode::tile:
+			{
+				this->caretPosition = this->text.length();
+			}
+			break;
+
+			case SelectMode::lastChar:
+			{
+				if (this->caretPosition > 0)
+				{
+					UINT32 moveCount = 1;
+					if (this->caretPosition >= 2 && this->caretPosition <= this->text.length())
+					{
+						if (this->isUnicodeUnit(this->text[this->caretPosition - 1], this->text[this->caretPosition - 2]))
+							moveCount = 2;
 					}
-					clusterPosition += clusterLength;
-					caretPosition = clusterPosition;
+
+					if (this->caretPosition < static_cast<UINT32>(moveCount))
+						this->caretPosition = 0;
+					else this->caretPosition -= moveCount;
 				}
 			}
 			break;
-		}
-		case SelectMode::absoluteLeading: {
-			DWRITE_HIT_TEST_METRICS hitTestMetrics;
-			float caretX, caretY;
 
-			textLayout->HitTestTextPosition(
-				caretPosition,
-				false,
-				&caretX,
-				&caretY,
-				&hitTestMetrics
-			);
+			case SelectMode::nextChar:
+			{
+				if (this->caretPosition < this->text.length())
+				{
+					UINT32 moveCount = 1;
+					if (this->caretPosition >= 0 && this->caretPosition <= this->text.length() - 2)
+					{
+						wchar_t charBackOne = this->text[this->caretPosition];
+						wchar_t charBackTwo = this->text[this->caretPosition + 1];
+						if (this->isUnicodeUnit(this->text[this->caretPosition], this->text[this->caretPosition + 1]))
+							moveCount = 2;
+					}
 
-			caretPosition = hitTestMetrics.textPosition;
-
+					if (this->caretPosition > this->text.length())
+						this->caretPosition = this->text.length();
+					else this->caretPosition += moveCount;
+				}
+			}
 			break;
-		}
-		case SelectMode::absoluteTrailing: {
-			DWRITE_HIT_TEST_METRICS hitTestMetrics;
-			float caretX, caretY;
 
-			textLayout->HitTestTextPosition(
-				caretPosition,
-				true,
-				&caretX,
-				&caretY,
-				&hitTestMetrics
-			);
+			case SelectMode::lastWord:
+			case SelectMode::nextWord:
+			{
+				std::vector<DWRITE_CLUSTER_METRICS> clusterMetrics{};
+				UINT32 clusterCount{};
+				this->pTextLayout->GetClusterMetrics(nullptr, 0, &clusterCount);
+				if (clusterCount == 0)
+					break;
 
-			caretPosition = hitTestMetrics.textPosition + hitTestMetrics.length;
+				clusterMetrics.resize(clusterCount);
+				this->pTextLayout->GetClusterMetrics(&clusterMetrics.front(), clusterCount, &clusterCount);
+
+				UINT32 clusterPosition = 0;
+				UINT32 oldCaretPosition = this->caretPosition;
+
+				if (mode == SelectMode::lastWord)
+				{
+					this->caretPosition = 0;
+					for (UINT32 cluster = 0; cluster < clusterCount; ++cluster)
+					{
+
+						clusterPosition += clusterMetrics[cluster].length;
+						if (clusterMetrics[cluster].canWrapLineAfter)
+						{
+							if (clusterPosition >= oldCaretPosition)
+								break;
+
+							this->caretPosition = clusterPosition;
+						}
+
+					}
+
+				}
+				else
+				{
+					for (UINT32 cluster = 0; cluster < clusterCount; ++cluster)
+					{
+						UINT32 clusterLength = clusterMetrics[cluster].length;
+
+						if (clusterPosition + clusterMetrics[cluster].length > oldCaretPosition&& clusterMetrics[cluster].canWrapLineAfter)
+						{
+							caretPosition = clusterPosition + clusterMetrics[cluster].length;
+							break;
+						}
+
+						clusterPosition += clusterLength;
+						this->caretPosition = clusterPosition;
+					}
+				}
+			}
 			break;
-		}
-		case SelectMode::all:
-			caretAnchor = 0;
-			caretPosition = text.length();
+
+			case SelectMode::absoluteLeading:
+			{
+				DWRITE_HIT_TEST_METRICS hitTestMetrics{};
+				float caretX{}, caretY{};
+
+				this->pTextLayout->HitTestTextPosition(this->caretPosition, false, &caretX, &caretY, &hitTestMetrics);
+
+				this->caretPosition = hitTestMetrics.textPosition;
+			}
+			break;
+
+			case SelectMode::absoluteTrailing:
+			{
+				DWRITE_HIT_TEST_METRICS hitTestMetrics{};
+				float caretX{}, caretY{};
+
+				this->pTextLayout->HitTestTextPosition(this->caretPosition, true, &caretX, &caretY, &hitTestMetrics);
+
+				this->caretPosition = hitTestMetrics.textPosition + hitTestMetrics.length;
+			}
+			break;
+
+			case SelectMode::all:
+			{
+				this->caretAnchor = 0;
+				this->caretPosition = this->text.length();
+			}
 			return;
-		default:
-			break;
+
+			default:
+				break;
 		}
 
 		if (moveAnchor)
-			this->caretAnchor = caretPosition;
+			this->caretAnchor = this->caretPosition;
 	}
 
 	bool TextBox::isUnicodeUnit(wchar_t char1, wchar_t char2)
 	{
-		return (IsLowSurrogate(char1) && IsHighSurrogate(char2))
-			|| (char1 == '\n' && char2 == '\r');
+		return (this->IsLowSurrogate(char1) && this->IsHighSurrogate(char2)) || (char1 == '\n' && char2 == '\r');
 	}
 
 	bool TextBox::IsHighSurrogate(UINT32 ch)
@@ -623,41 +652,52 @@ namespace UIKit::UI
 		return (ch & 0xFC00) == 0xDC00;
 	}
 
-	IDWriteTextLayout* TextBox::createTextLayout(const std::wstring& text)
+	void TextBox::createTextLayout()
 	{
-		IDWriteTextLayout* textLayout = nullptr;
-		IDWriteTextFormat* textFormat = nullptr;
+		Graphics::SafeRelease(&this->pTextLayout);
 
-		Graphics::Core::getDWriteFactory()->CreateTextFormat(L"", 0,DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 12.0f, L"", &textFormat);
+		IDWriteTextFormat* textFormat{};
+
+		Graphics::Core::getDWriteFactory()->CreateTextFormat(L"", 0,DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, Graphics::pixelToDipY(this->fontSize), L"", &textFormat);
 
 		Graphics::Core::getDWriteFactory()->CreateTextLayout(
-			text.c_str(),
-			static_cast<UINT32>(text.length()),
+			this->text.c_str(),
+			static_cast<UINT32>(this->text.length()),
 			textFormat,
-			width, height,
-			&textLayout
+			this->width, this->height,
+			&this->pTextLayout
 		);
 
 		Graphics::SafeRelease(&textFormat);
+	}
 
-		return textLayout;
+	bool TextBox::checkMouse(const float& xPos, const float& yPos)
+	{
+		BOOL contains{};
+		this->pRoundRectGeometry->FillContainsPoint(D2D1::Point2F(xPos, yPos), D2D1::Matrix3x2F::Identity(), &contains);
+		//this->active = contains;
+
+		//if (!this->active)
+		//	this->scrollY = 0;
+	
+		return static_cast<bool>(contains);
 	}
 
 	void TextBox::fillSelectedRange()
 	{
 		UINT32 actualHitTestCount = 0;
-		auto selectedRange = getSelectionRange();
-		if (selectedRange.length > 0) {
-			textLayout->HitTestTextRange(selectedRange.startPosition, selectedRange.length, 0, 0, 0, 0, &actualHitTestCount);
+		auto selectedRange = this->getSelectionRange();
+		if (selectedRange.length > 0)
+		{
+			this->pTextLayout->HitTestTextRange(selectedRange.startPosition, selectedRange.length, 0, 0, 0, 0, &actualHitTestCount);
 			std::vector<DWRITE_HIT_TEST_METRICS>hitTestMetrics(actualHitTestCount);
-			textLayout->HitTestTextRange(selectedRange.startPosition, selectedRange.length, this->x, this->y - scrollY, &hitTestMetrics[0], static_cast<UINT32>(hitTestMetrics.size()), &actualHitTestCount);
+			this->pTextLayout->HitTestTextRange(selectedRange.startPosition, selectedRange.length, this->x, this->y - this->scrollY, &hitTestMetrics[0], static_cast<UINT32>(hitTestMetrics.size()), &actualHitTestCount);
 
-			//改变画刷为天蓝色
-			brush->SetColor(D2D1::ColorF(D2D1::ColorF::LightSkyBlue));
-
-			//遍历选中区域并进行填充
-			for (UINT32 i = 0; i < actualHitTestCount; i++) {
+			this->pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::LightSkyBlue));
+			for (UINT32 i = 0; i < actualHitTestCount; i++)
+			{
 				const DWRITE_HIT_TEST_METRICS& htm = hitTestMetrics[i];
+
 				D2D1_RECT_F highlightRect = {
 					htm.left,
 					htm.top,
@@ -665,50 +705,50 @@ namespace UIKit::UI
 					(htm.top + htm.height)
 				};
 
-				this->pRT->FillRectangle(highlightRect, brush);
+				this->pRT->FillRectangle(highlightRect, this->pBrush);
 			}
 		}
 	}
 
 	void TextBox::drawCaret()
 	{
-		DWRITE_HIT_TEST_METRICS caretMetrics;
-		float caretX, caretY;
-		textLayout->HitTestTextPosition(caretPosition, false, &caretX, &caretY, &caretMetrics);
+		DWRITE_HIT_TEST_METRICS caretMetrics{};
+		float caretX{}, caretY{};
+		this->pTextLayout->HitTestTextPosition(this->caretPosition, false, &caretX, &caretY, &caretMetrics);
 
 		caretX = std::ceilf(caretX) + 0.5f;
 		caretY = std::ceilf(caretY) + 0.5f;
 
-		//若不处于滚动状态，则对光标位置进行判断修改，使其处于显示区域
-		if (!isOnScroll) {
-			if (caretY - scrollY + caretMetrics.height > height) {//光标超出窗口底部
-				scrollY = caretY - height + caretMetrics.height;
-			}
-			else if (caretY - scrollY < 0) {//光标在窗口上方
-				scrollY = caretY;
-			}
+		if (!this->isOnScroll)
+		{
+			if (caretY - this->scrollY + caretMetrics.height > this->height)
+				this->scrollY = caretY - this->height + caretMetrics.height;
+			else if (caretY - this->scrollY < 0)
+				this->scrollY = caretY;
 		}
 
-		//使用sin函数决定是否绘制caret
-		if (sin((timeGetTime() / 1000.f - lastInputTime) * 6.28f) > -0.1) {
-
-			//caret颜色为黑色
-			brush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
-
-			this->pRT->DrawLine(D2D1::Point2F(this->x + caretX, this->y + caretY - scrollY), D2D1::Point2F(this->x + caretX, this->y + caretY + caretMetrics.height - scrollY), brush);
+		if (sin((timeGetTime() / 1000.f - this->lastInputTime) * 6.28f) > -0.1)
+		{
+			this->pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
+			this->pRT->DrawLine(D2D1::Point2F(this->x + caretX, this->y + caretY - this->scrollY), D2D1::Point2F(this->x + caretX, this->y + caretY + caretMetrics.height - this->scrollY), this->pBrush);
 		}
 	}
 
 	void TextBox::drawText()
 	{
-		brush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
-
-		//文本为黑色
-		this->pRT->DrawTextLayout(D2D1::Point2F(this->x, this->y - scrollY), textLayout, brush);
+		this->pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::WhiteSmoke));
+		this->pRT->DrawTextLayout(D2D1::Point2F(this->x, this->y - this->scrollY), this->pTextLayout, this->pBrush);
 	}
 
-	TextBox::TextBox()
-		: Widget(L"DebugTextBox", 200.0f, 200.0f, 50.0f, 50.0f)
+	TextBox::TextBox(const std::wstring&& textBoxID, const std::wstring&& text, const bool&& multiline, const float&& fontSize, const float&& width, const float&& height, const float&& x, const float&& y)
+		: text{ text }, isMultiline{ multiline }, fontSize{ fontSize }, Widget(textBoxID, width, height, x, y)
+	{
+		this->handleKeyboard = true;
+		this->handleMouse = true;
+	}
+
+	TextBox::TextBox(const std::wstring& textBoxID, const std::wstring& text, const bool& multiline, const float& fontSize, const float& width, const float& height, const float& x, const float& y)
+		: text{ text }, isMultiline{ multiline }, fontSize{ fontSize }, Widget(textBoxID, width, height, x, y)
 	{
 		this->handleKeyboard = true;
 		this->handleMouse = true;
@@ -716,5 +756,8 @@ namespace UIKit::UI
 
 	TextBox::~TextBox()
 	{
+		Graphics::SafeRelease(&this->pRoundRectGeometry);
+		Graphics::SafeRelease(&this->pBrush);
+		Graphics::SafeRelease(&this->pTextLayout);
 	}
 }

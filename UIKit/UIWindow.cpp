@@ -114,12 +114,12 @@ namespace UIKit::UI
 		}
 	}
 
-	void Window::onMouseScroll(const short& delta)
+	void Window::onMouseScroll(const int& xPos, const int& yPos, const short& delta)
 	{
 		for (const auto& widget : this->windowWidgets)
 		{
 			if (widget->isVisible() && widget->isHandleMouse())
-				widget->onMouseScroll(delta);
+				widget->onMouseScroll(xPos, yPos, delta);
 		}
 	}
 
@@ -165,7 +165,7 @@ namespace UIKit::UI
 
 			case WM_MOUSEWHEEL:
 			{
-				this->onMouseScroll(static_cast<short>(HIWORD(wParam)));
+				this->onMouseScroll(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(LOWORD(lParam)))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(HIWORD(lParam)))), static_cast<short>(HIWORD(wParam)));
 			}
 			return 0;
 

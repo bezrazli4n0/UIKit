@@ -31,7 +31,7 @@ namespace UIKit::UI
 	{
 	}
 
-	void Widget::onMouseScroll(const short& delta)
+	void Widget::onMouseScroll(const int& xPos, const int& yPos, const short& delta)
 	{
 	}
 
@@ -161,5 +161,9 @@ namespace UIKit::UI
 	bool Widget::isHandleTab() const
 	{
 		return this->handleTab;
+	}
+	bool Widget::isActive() const
+	{
+		return this->active;
 	}
 }

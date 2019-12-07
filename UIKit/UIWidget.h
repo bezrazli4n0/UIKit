@@ -17,7 +17,7 @@ namespace UIKit
 		{
 		protected:
 			float x{}, y{}, width{}, height{};
-			bool visible{ true }, handleMouse{ false }, handleKeyboard{ false }, handleTab{ false };
+			bool visible{ true }, handleMouse{ false }, handleKeyboard{ false }, handleTab{ false }, active{ false };
 			std::wstring widgetID{};
 			ID2D1DeviceContext* pRT{};
 
@@ -31,7 +31,7 @@ namespace UIKit
 			virtual void onMouseUp(const int& xPos, const int& yPos);
 			virtual void onMouseDown(const int& xPos, const int& yPos);
 			virtual void onMouseMove(const int& xPos, const int& yPos);
-			virtual void onMouseScroll(const short& delta);
+			virtual void onMouseScroll(const int& xPos, const int& yPos, const short& delta);
 			virtual void onChar(UINT32 c);
 			virtual void onKey(UINT32 vk);
 
@@ -63,6 +63,7 @@ namespace UIKit
 			bool isHandleMouse() const;
 			bool isHandleKeyboard() const;
 			bool isHandleTab() const;
+			bool isActive() const;
 
 			friend class Window;
 

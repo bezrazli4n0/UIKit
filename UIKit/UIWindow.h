@@ -43,7 +43,7 @@ namespace UIKit
 			virtual void onMouseUp(const int& xPos, const int& yPos);
 			virtual void onMouseDown(const int& xPos, const int& yPos);
 			virtual void onMouseMove(const int& xPos, const int& yPos);
-			virtual void onMouseScroll(const short& delta);
+			virtual void onMouseScroll(const int& xPos, const int& yPos, const short& delta);
 			virtual void onChar(UINT32 c);
 			virtual void onKey(UINT32 vk);
 
