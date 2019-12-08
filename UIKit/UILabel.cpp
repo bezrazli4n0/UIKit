@@ -11,7 +11,7 @@ namespace UIKit::UI
 	void Label::render()
 	{
 		IDWriteTextFormat* pTextFormat{};
-		Graphics::Core::getDWriteFactory()->CreateTextFormat(this->fontName.c_str(), nullptr, DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_REGULAR, DWRITE_FONT_STYLE::DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_NORMAL, Graphics::pixelToDipY(this->fontSize), L"", &pTextFormat);
+		Graphics::Core::getDWriteFactory()->CreateTextFormat(this->fontName.c_str(), nullptr, this->fontWeight, this->fontStyle, DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_NORMAL, Graphics::pixelToDipY(this->fontSize), L"", &pTextFormat);
 	
 		pTextFormat->SetTextAlignment(this->horizontalAlign);
 		pTextFormat->SetParagraphAlignment(this->verticalAlign);
@@ -198,6 +198,138 @@ namespace UIKit::UI
 			case vAlign::Bottom:
 			{
 				this->verticalAlign = { DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_FAR };
+			}
+			break;
+		}
+	}
+	
+	void Label::setFontWeight(const weight&& fontWeight)
+	{
+		switch (fontWeight)
+		{
+			case weight::Thin:
+			{
+				this->fontWeight = DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_THIN;
+			}
+			break;
+
+			case weight::Light:
+			{
+				this->fontWeight = DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_LIGHT;
+			}
+			break;
+
+			case weight::Normal:
+			{
+				this->fontWeight = DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_NORMAL;
+			}
+			break;
+
+			case weight::Regular:
+			{
+				this->fontWeight = DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_REGULAR;
+			}
+			break;
+
+			case weight::Bold:
+			{
+				this->fontWeight = DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_BOLD;
+			}
+			break;
+
+			case weight::Black:
+			{
+				this->fontWeight = DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_BLACK;
+			}
+			break;
+		}
+	}
+
+	void Label::setFontWeight(const weight& fontWeight)
+	{
+		switch (fontWeight)
+		{
+			case weight::Thin:
+			{
+				this->fontWeight = DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_THIN;
+			}
+			break;
+
+			case weight::Light:
+			{
+				this->fontWeight = DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_LIGHT;
+			}
+			break;
+
+			case weight::Normal:
+			{
+				this->fontWeight = DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_NORMAL;
+			}
+			break;
+
+			case weight::Regular:
+			{
+				this->fontWeight = DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_REGULAR;
+			}
+			break;
+
+			case weight::Bold:
+			{
+				this->fontWeight = DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_BOLD;
+			}
+			break;
+
+			case weight::Black:
+			{
+				this->fontWeight = DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_BLACK;
+			}
+			break;
+		}
+	}
+	
+	void Label::setFontStyle(const style&& fontStyle)
+	{
+		switch (fontStyle)
+		{
+			case style::Italic:
+			{
+				this->fontStyle = DWRITE_FONT_STYLE::DWRITE_FONT_STYLE_ITALIC;
+			}
+			break;
+
+			case style::Normal:
+			{
+				this->fontStyle = DWRITE_FONT_STYLE::DWRITE_FONT_STYLE_NORMAL;
+			}
+			break;
+
+			case style::Oblique:
+			{
+				this->fontStyle = DWRITE_FONT_STYLE::DWRITE_FONT_STYLE_OBLIQUE;
+			}
+			break;
+		}
+	}
+
+	void Label::setFontStyle(const style& fontStyle)
+	{
+		switch (fontStyle)
+		{
+			case style::Italic:
+			{
+				this->fontStyle = DWRITE_FONT_STYLE::DWRITE_FONT_STYLE_ITALIC;
+			}
+			break;
+
+			case style::Normal:
+			{
+				this->fontStyle = DWRITE_FONT_STYLE::DWRITE_FONT_STYLE_NORMAL;
+			}
+			break;
+
+			case style::Oblique:
+			{
+				this->fontStyle = DWRITE_FONT_STYLE::DWRITE_FONT_STYLE_OBLIQUE;
 			}
 			break;
 		}

@@ -34,8 +34,8 @@ namespace UIKit::UI
 		if (this->pTextLayout)
 		{
 			ID2D1Layer* pLayer{};
-			this->pRT->CreateLayer(D2D1::SizeF(this->width + 1.0f, this->height + 1.0f), &pLayer);
-			this->pRT->PushLayer(D2D1::LayerParameters(D2D1::RectF(this->x, this->y, this->x + this->width + 1.0f, this->y + this->height + 1.0f)), pLayer);
+			this->pRT->CreateLayer(D2D1::SizeF(this->width + 1.5f, this->height + 1.5f), &pLayer);
+			this->pRT->PushLayer(D2D1::LayerParameters(D2D1::RectF(this->x - 1.5f, this->y - 1.5f, this->x + this->width + 1.5f, this->y + this->height + 1.5f)), pLayer);
 
 			if (this->active)
 			{
@@ -53,13 +53,14 @@ namespace UIKit::UI
 	void TextBox::onAttach()
 	{
 		this->pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &this->pBrush);
-		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x - 5.0f + 0.5f, this->y - 5.0f + 0.5f, this->x + this->width + 5.0f + 0.5f, this->y + this->height + 5.0f + 0.5f), 6.0f, 6.0f), &this->pRoundRectGeometry);
+		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(Graphics::dipToPixelX(this->x) - this->expandedMouseAreaX, Graphics::dipToPixelY(this->y), Graphics::dipToPixelX(this->x + this->width) + this->expandedMouseAreaX, Graphics::dipToPixelY(this->y + this->height)), 0.0f, 0.0f), &this->pRoundRectGeometry);
 	}
 
 	void TextBox::onDetach()
 	{
 		Graphics::SafeRelease(&this->pRoundRectGeometry);
 		Graphics::SafeRelease(&this->pBrush);
+		Graphics::SafeRelease(&this->pTextLayout);
 	}
 
 	void TextBox::onChar(UINT32 c)
@@ -674,6 +675,9 @@ namespace UIKit::UI
 		IDWriteTextFormat* textFormat{};
 
 		Graphics::Core::getDWriteFactory()->CreateTextFormat(L"", 0,DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, Graphics::pixelToDipY(this->fontSize), L"", &textFormat);
+		
+		if (!this->multiline)
+			textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
 		auto correctedWidth = this->width;
 		if (!this->multiline)
@@ -748,13 +752,13 @@ namespace UIKit::UI
 
 		if (!this->multiline)
 		{
-			if (caretX - this->scrollX + caretMetrics.width > this->width)
+			if (caretX - this->scrollX + caretMetrics.width > this->width) 
 				this->scrollX = caretX - this->width + caretMetrics.width;
 			else if (caretX - this->scrollX < 0)
 				this->scrollX = caretX;
 		}
 
-		if (sin((timeGetTime() / 1000.f - this->lastInputTime) * 6.28f) > -0.1)
+		if (sin((timeGetTime() / 1000.f - this->lastInputTime) * 6.28f) > -0.1) 
 		{
 			this->pBrush->SetColor(this->caretColor);
 			if (this->multiline)
@@ -839,5 +843,34 @@ namespace UIKit::UI
 			this->text.erase(std::remove(std::begin(this->text), std::end(this->text), '\n'), std::end(this->text));
 		}
 		this->needUpdate = true;
+	}
+
+	void TextBox::draw()
+	{
+		if (this->isVisible() && this->pRT != nullptr)
+		{
+			this->update();
+			this->render();
+		}
+	}
+
+	void TextBox::setRT(ID2D1DeviceContext* pRT)
+	{
+		this->pRT = pRT;
+		this->onAttach();
+	}
+
+	void TextBox::expandMouseArea(const float&& areaX)
+	{
+		this->expandedMouseAreaX = areaX;
+		Graphics::SafeRelease(&this->pRoundRectGeometry);
+		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(Graphics::dipToPixelX(this->x) - this->expandedMouseAreaX, Graphics::dipToPixelY(this->y), Graphics::dipToPixelX(this->x + this->width) + this->expandedMouseAreaX, Graphics::dipToPixelY(this->y + this->height)), 0.0f, 0.0f), &this->pRoundRectGeometry);
+	}
+
+	void TextBox::expandMouseArea(const float& areaX)
+	{
+		this->expandedMouseAreaX = areaX;
+		Graphics::SafeRelease(&this->pRoundRectGeometry);
+		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(Graphics::dipToPixelX(this->x) - this->expandedMouseAreaX, Graphics::dipToPixelY(this->y), Graphics::dipToPixelX(this->x + this->width) + this->expandedMouseAreaX, Graphics::dipToPixelY(this->y + this->height)), 0.0f, 0.0f), &this->pRoundRectGeometry);
 	}
 }
