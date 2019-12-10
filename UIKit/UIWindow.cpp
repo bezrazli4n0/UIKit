@@ -141,6 +141,20 @@ namespace UIKit::UI
 		}
 	}
 
+	bool Window::updateCursor()
+	{
+		for (const auto& widget : this->windowWidgets)
+		{
+			if (widget->isVisible() && widget->isHandleMouse())
+			{
+				if (widget->updateCursor())
+					return true;
+			}
+		}
+
+		return false;
+	}
+
 	LRESULT Window::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (uMsg)
@@ -178,6 +192,15 @@ namespace UIKit::UI
 			case WM_KEYDOWN:
 			{
 				this->onKey(wParam);
+			}
+			return 0;
+
+			case WM_SETCURSOR:
+			{
+				auto ret = this->updateCursor();
+				if (!ret)
+					break;
+				return ret;
 			}
 			return 0;
 

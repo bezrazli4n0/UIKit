@@ -35,6 +35,8 @@ namespace UIKit
 			virtual void onChar(UINT32 c);
 			virtual void onKey(UINT32 vk);
 
+			virtual bool updateCursor();
+
 		public:
 			Widget(const std::wstring&& widgetID, const float&& width = 0.0f, const float&& height = 0.0f, const float&& x = 0.0f, const float&& y = 0.0f);
 			Widget(const std::wstring& widgetID, const float& width = 0.0f, const float& height = 0.0f, const float& x = 0.0f, const float& y = 0.0f);

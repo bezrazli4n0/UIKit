@@ -5,6 +5,7 @@ namespace UIKit::UI
 {
 	void Widget::update()
 	{
+
 	}
 
 	void Widget::render()
@@ -41,6 +42,11 @@ namespace UIKit::UI
 
 	void Widget::onKey(UINT32 vk)
 	{
+	}
+
+	bool Widget::updateCursor()
+	{
+		return false;
 	}
 
 	Widget::Widget(const std::wstring&& widgetID, const float&& width, const float&& height, const float&& x, const float&& y)
@@ -162,6 +168,7 @@ namespace UIKit::UI
 	{
 		return this->handleTab;
 	}
+
 	bool Widget::isActive() const
 	{
 		return this->active;

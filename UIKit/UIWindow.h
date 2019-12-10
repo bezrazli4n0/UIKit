@@ -47,6 +47,8 @@ namespace UIKit
 			virtual void onChar(UINT32 c);
 			virtual void onKey(UINT32 vk);
 
+			virtual bool updateCursor();
+
 			LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 			static LRESULT CALLBACK WindowProc_(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

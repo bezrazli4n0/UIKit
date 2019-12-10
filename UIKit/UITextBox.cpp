@@ -80,6 +80,8 @@ namespace UIKit::UI
 			}
 
 			this->text.insert(this->caretPosition, chars, charsLength);
+			if (this->password)
+				this->passwordText.insert(this->caretPosition, charsLength, this->passwordChar[0]);
 
 			this->caretPosition += charsLength;
 			this->caretAnchor = this->caretPosition;
@@ -269,8 +271,7 @@ namespace UIKit::UI
 
 	void TextBox::onMouseUp(const int& xPos, const int& yPos)
 	{
-		if (this->checkMouse(static_cast<float>(xPos), static_cast<float>(yPos)))
-			SetCursor(LoadCursor(nullptr, IDC_IBEAM));
+		this->mousePressed = false;
 
 		float time = timeGetTime() / 1000.f;
 		const float doubleClickInterval = 0.3f;
@@ -287,7 +288,7 @@ namespace UIKit::UI
 		if (this->checkMouse(static_cast<float>(xPos), static_cast<float>(yPos)))
 		{
 			this->active = true;
-			SetCursor(LoadCursor(nullptr, IDC_IBEAM));
+			this->mousePressed = true;
 		}
 		else
 		{
@@ -304,7 +305,9 @@ namespace UIKit::UI
 	void TextBox::onMouseMove(const int& xPos, const int& yPos)
 	{
 		if (this->checkMouse(static_cast<float>(xPos), static_cast<float>(yPos)))
-			SetCursor(LoadCursor(nullptr, IDC_IBEAM));
+			this->mouseHover = true;
+		else
+			this->mouseHover = false;
 
 		if ((GetKeyState(MK_LBUTTON) & 0x100) != 0)
 			this->setSelectionFromPoint(static_cast<float>(xPos + Graphics::dipToPixelX(this->scrollX)), static_cast<float>(yPos + Graphics::dipToPixelY(this->scrollY)), false);
@@ -329,6 +332,18 @@ namespace UIKit::UI
 				this->needUpdate = true;
 			}
 		}
+	}
+
+	bool TextBox::updateCursor()
+	{
+		if (this->mouseHover)
+			SetCursor(this->hBeamCursor);
+		else if (this->active && this->mousePressed)
+			SetCursor(this->hBeamCursor);
+		else
+			return false;
+
+		return true;
 	}
 
 	DWRITE_TEXT_RANGE TextBox::getSelectionRange()
@@ -687,7 +702,7 @@ namespace UIKit::UI
 		}
 
 		Graphics::Core::getDWriteFactory()->CreateTextLayout(
-			this->text.c_str(),
+			this->password ? this->passwordText.c_str() : this->text.c_str(),
 			static_cast<UINT32>(this->text.length()),
 			textFormat,
 			correctedWidth, this->height,
@@ -777,18 +792,26 @@ namespace UIKit::UI
 			this->pRT->DrawTextLayout(D2D1::Point2F(this->x - this->scrollX, this->y), this->pTextLayout, this->pBrush);
 	}
 
-	TextBox::TextBox(const std::wstring&& textBoxID, const std::wstring&& text, const bool&& isMultiline, const bool&& isReadOnly, const float&& fontSize, const float&& width, const float&& height, const float&& x, const float&& y)
-		: text{ text }, multiline{ isMultiline }, readOnly{ isReadOnly }, fontSize{ fontSize }, Widget(textBoxID, width, height, x, y)
+	TextBox::TextBox(const std::wstring&& textBoxID, const std::wstring&& text, const bool&& isMultiline, const bool&& isReadOnly, const bool&& isPassword, const float&& fontSize, const float&& width, const float&& height, const float&& x, const float&& y)
+		: text{ text }, multiline{ isMultiline }, readOnly{ isReadOnly }, password{ isPassword }, fontSize{ fontSize }, Widget(textBoxID, width, height, x, y)
 	{
 		this->handleKeyboard = true;
 		this->handleMouse = true;
+		this->hBeamCursor = LoadCursor(nullptr, IDC_IBEAM);
+
+		if (this->password)
+			this->passwordText.insert(this->caretPosition, this->text.length(), this->passwordChar[0]);
 	}
 
-	TextBox::TextBox(const std::wstring& textBoxID, const std::wstring& text, const bool& isMultiline, const bool& isReadOnly, const float& fontSize, const float& width, const float& height, const float& x, const float& y)
-		: text{ text }, multiline{ isMultiline }, readOnly{ isReadOnly }, fontSize{ fontSize }, Widget(textBoxID, width, height, x, y)
+	TextBox::TextBox(const std::wstring& textBoxID, const std::wstring& text, const bool& isMultiline, const bool& isReadOnly, const bool& isPassword, const float& fontSize, const float& width, const float& height, const float& x, const float& y)
+		: text{ text }, multiline{ isMultiline }, readOnly{ isReadOnly }, password{ isPassword }, fontSize{ fontSize }, Widget(textBoxID, width, height, x, y)
 	{
 		this->handleKeyboard = true;
 		this->handleMouse = true;
+		this->hBeamCursor = LoadCursor(nullptr, IDC_IBEAM);
+
+		if (this->password)
+			this->passwordText.insert(this->caretPosition, this->text.length(), this->passwordChar[0]);
 	}
 
 	TextBox::~TextBox()
@@ -831,6 +854,11 @@ namespace UIKit::UI
 			this->text.erase(std::remove(std::begin(this->text), std::end(this->text), '\r'), std::end(this->text));
 			this->text.erase(std::remove(std::begin(this->text), std::end(this->text), '\n'), std::end(this->text));
 		}
+		if (this->password)
+		{
+			this->passwordText.clear();
+			this->passwordText.insert(0, this->text.length(), this->passwordChar[0]);
+		}
 		this->needUpdate = true;
 	}
 
@@ -841,6 +869,11 @@ namespace UIKit::UI
 		{
 			this->text.erase(std::remove(std::begin(this->text), std::end(this->text), '\r'), std::end(this->text));
 			this->text.erase(std::remove(std::begin(this->text), std::end(this->text), '\n'), std::end(this->text));
+		}
+		if (this->password)
+		{
+			this->passwordText.clear();
+			this->passwordText.insert(0, this->text.length(), this->passwordChar[0]);
 		}
 		this->needUpdate = true;
 	}
