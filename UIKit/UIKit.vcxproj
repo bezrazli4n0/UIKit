@@ -137,6 +137,7 @@
     <ClInclude Include="UIGraphics.h" />
     <ClInclude Include="UIGraphicsHelper.hpp" />
     <ClInclude Include="UILabel.h" />
+    <ClInclude Include="UILine.h" />
     <ClInclude Include="UIRectangle.h" />
     <ClInclude Include="UIRenderer.h" />
     <ClInclude Include="UITextBox.h" />
@@ -147,6 +148,7 @@
     <ClCompile Include="UIApp.cpp" />
     <ClCompile Include="UIGraphics.cpp" />
     <ClCompile Include="UILabel.cpp" />
+    <ClCompile Include="UILine.cpp" />
     <ClCompile Include="UIRectangle.cpp" />
     <ClCompile Include="UIRenderer.cpp" />
     <ClCompile Include="UITextBox.cpp" />
