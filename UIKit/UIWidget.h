@@ -20,6 +20,7 @@ namespace UIKit
 			bool visible{ true }, handleMouse{ false }, handleKeyboard{ false }, handleTab{ false }, active{ false };
 			std::wstring widgetID{};
 			ID2D1DeviceContext* pRT{};
+			int zIndex{};
 
 		protected:
 			virtual void update();
@@ -61,6 +62,10 @@ namespace UIKit
 
 			virtual void show(bool flag = true);
 			
+			int getZIndex() const;
+			void setZIndex(const int&& z);
+			void setZIndex(const int& z);
+
 			bool isVisible() const;
 			bool isHandleMouse() const;
 			bool isHandleKeyboard() const;

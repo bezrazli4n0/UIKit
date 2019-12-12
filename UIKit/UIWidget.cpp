@@ -148,6 +148,21 @@ namespace UIKit::UI
 	{
 		this->visible = flag;
 	}
+
+	int Widget::getZIndex() const
+	{
+		return this->zIndex;
+	}
+
+	void Widget::setZIndex(const int&& z)
+	{
+		this->zIndex = z;
+	}
+
+	void Widget::setZIndex(const int& z)
+	{
+		this->zIndex = z;
+	}
 	
 	bool Widget::isVisible() const
 	{

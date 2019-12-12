@@ -67,6 +67,9 @@ namespace UIKit::UI
 
 	void Window::update()
 	{
+		this->windowWidgets.sort([](Widget* lhs, Widget* rhs) {
+			return lhs->getZIndex() < rhs->getZIndex();
+		});
 	}
 
 	void Window::render()
