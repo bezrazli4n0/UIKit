@@ -10,6 +10,7 @@
 #include <d2d1_1.h>
 #include <d2d1_2.h>
 #include <dwrite.h>
+#include <wincodec.h>
 
 namespace UIKit
 {
@@ -31,11 +32,13 @@ namespace UIKit
 			static inline ID3D11Device* pD3D11Device{};
 			static inline ID2D1Factory1* pD2D1Factory{};
 			static inline IDWriteFactory* pDWriteFactory{};
+			static inline IWICImagingFactory* pIWICFactory{};
 
 		public:
 			static ID3D11Device* getDevice();
 			static ID2D1Factory1* getFactory();
 			static IDWriteFactory* getDWriteFactory();
+			static IWICImagingFactory* getWICFactory();
 			static bool initCore();
 			static void freeCore();
 

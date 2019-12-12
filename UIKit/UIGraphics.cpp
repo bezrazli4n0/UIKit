@@ -20,8 +20,22 @@ namespace UIKit::Graphics
 		return pDWriteFactory;
 	}
 
+	IWICImagingFactory* Core::getWICFactory()
+	{
+		return pIWICFactory;
+	}
+
 	bool Core::initCore()
 	{
+		CoInitialize(0);
+
+		HRESULT hr1 = CoCreateInstance(
+			CLSID_WICImagingFactory,
+			NULL,
+			CLSCTX_INPROC_SERVER,
+			IID_PPV_ARGS(&pIWICFactory)
+		);
+
 		if (!SUCCEEDED(D2D1CreateFactory(D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_SINGLE_THREADED, &pD2D1Factory)))
 			return false;
 
@@ -63,8 +77,10 @@ namespace UIKit::Graphics
 
 	void Core::freeCore()
 	{
+		SafeRelease(&pIWICFactory);
 		SafeRelease(&pDWriteFactory);
 		SafeRelease(&pD2D1Factory);
 		SafeRelease(&pD3D11Device);
+		CoUninitialize();
 	}
 }
