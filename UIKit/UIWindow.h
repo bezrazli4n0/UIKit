@@ -33,6 +33,7 @@ namespace UIKit
 			windowOptions::roundedOptions roundedWindow{};
 			D2D1_COLOR_F windowBackgroundColor{ D2D1::ColorF(D2D1::ColorF::White) };
 			HRGN hRoundedRgn{};
+			int titleBarArea{};
 
 		private:
 			bool createWindow();
@@ -80,6 +81,9 @@ namespace UIKit
 
 			virtual void show(bool flag = true);
 			HWND getHandle() const;
+
+			void setTitleBarArea(const int&& areaY);
+			void setTitleBarArea(const int& areaY);
 
 			void onClose(WidgetCallback callback);
 

@@ -24,7 +24,7 @@ namespace UIKit
 			~Picture();
 
 			bool loadFromFile(const std::wstring&& path);
-			bool loadFromResource(const std::wstring&& resName, const std::wstring&& resType);
+			bool loadFromResource(const int&& resID, const std::wstring&& resType);
 
 		};
 	}

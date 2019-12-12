@@ -72,7 +72,7 @@ namespace UIKit::UI
 		return true;
 	}
 
-	bool Picture::loadFromResource(const std::wstring&& resName, const std::wstring&& resType)
+	bool Picture::loadFromResource(const int&& resID, const std::wstring&& resType)
 	{
 		IWICBitmapDecoder* pDecoder{};
 		IWICBitmapFrameDecode* pSource{};
@@ -83,7 +83,7 @@ namespace UIKit::UI
 		if (this->pRT == nullptr)
 			return false;
 
-		HRSRC imageResHandle{ FindResourceW(nullptr, resName.c_str(), resType.c_str()) };
+		HRSRC imageResHandle{ FindResourceW(nullptr, MAKEINTRESOURCE(resID), resType.c_str()) };
 		if (!imageResHandle)
 			return false;
 

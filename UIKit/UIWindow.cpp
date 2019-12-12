@@ -26,6 +26,7 @@ namespace UIKit::UI
 		if (!RegisterClassEx(&wc))
 			return false;
 
+
 		auto [correctedWidth, correctedHeight] = this->getCorrectedWindowSize();
 
 		if (this->windowHandle = CreateWindowEx(0, this->windowClass.c_str(), this->windowTitle.c_str(),
@@ -59,6 +60,9 @@ namespace UIKit::UI
 
 	WidgetPoints Window::getCorrectedWindowSize()
 	{
+		if (this->windowFrameless)
+			return this->getSizeInDIP();
+
 		RECT rc{ 0, 0, static_cast<LONG>(this->width), static_cast<LONG>(this->height) };
 		AdjustWindowRect(&rc, this->windowStyle, false);
 
@@ -207,6 +211,23 @@ namespace UIKit::UI
 			}
 			return 0;
 
+			case WM_NCLBUTTONDBLCLK:
+			case WM_NCLBUTTONDOWN:
+			{
+				POINT pt{ LOWORD(lParam), HIWORD(lParam) };
+				ScreenToClient(hWnd, &pt);
+				this->onMouseDown(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(pt.x))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(pt.y))));
+			}
+			break;
+
+			case WM_NCLBUTTONUP:
+			{
+				POINT pt{ LOWORD(lParam), HIWORD(lParam) };
+				ScreenToClient(hWnd, &pt);
+				this->onMouseUp(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(pt.x))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(pt.y))));
+			}
+			break;
+
 			case WM_NCHITTEST:
 			{
 				if (this->windowFrameless)
@@ -216,7 +237,11 @@ namespace UIKit::UI
 					// Depending on the mouse coordinates passed in LPARAM, you may 
 					// return other values to enable resizing.
 					//SetWindowLong(hWnd, DWL_MSGRESULT, HTCAPTION);
-					return HTCAPTION;
+
+					POINT pt{ LOWORD(lParam), HIWORD(lParam) };
+					ScreenToClient(hWnd, &pt);
+					if (pt.y <= this->titleBarArea)
+						return HTCAPTION;
 				}
 			}
 			break;
@@ -505,6 +530,16 @@ namespace UIKit::UI
 	HWND Window::getHandle() const
 	{
 		return this->windowHandle;
+	}
+
+	void Window::setTitleBarArea(const int&& areaY)
+	{
+		this->titleBarArea = areaY;
+	}
+
+	void Window::setTitleBarArea(const int& areaY)
+	{
+		this->titleBarArea = areaY;
 	}
 
 	void Window::onClose(WidgetCallback callback)

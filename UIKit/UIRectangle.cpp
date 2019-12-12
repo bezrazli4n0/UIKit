@@ -12,7 +12,10 @@ namespace UIKit::UI
 	{
 		this->pBrush->SetColor(this->rectColor);
 		if (this->framed)
-			this->pRT->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(std::ceilf(this->x) + Graphics::pixelToDipX(0.5f), std::ceilf(this->y) + Graphics::pixelToDipY(0.5f), std::ceilf(this->x + this->width) + Graphics::pixelToDipX(0.5f), std::ceilf(this->y + this->height) + Graphics::pixelToDipY(0.5f)), this->radiusX, this->radiusY), this->pBrush);
+		{
+			auto roundValue = this->roundValue ? 0.5f : 0.0f;
+			this->pRT->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(std::ceilf(this->x) + Graphics::pixelToDipX(roundValue), std::ceilf(this->y) + Graphics::pixelToDipY(roundValue), std::ceilf(this->x + this->width) + Graphics::pixelToDipX(roundValue), std::ceilf(this->y + this->height) + Graphics::pixelToDipY(roundValue)), this->radiusX, this->radiusY), this->pBrush, this->strokeSize);
+		}
 		else
 			this->pRT->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(std::ceilf(this->x), std::ceilf(this->y), std::ceilf(this->x + this->width), std::ceilf(this->y + this->height)), this->radiusX, this->radiusY), this->pBrush);
 	}
@@ -68,6 +71,21 @@ namespace UIKit::UI
 	void Rectangle::setRectColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a)
 	{
 		this->rectColor = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+	}
+
+	void Rectangle::setStrokeSize(const float&& strokeSize)
+	{
+		this->strokeSize = strokeSize;
+	}
+
+	void Rectangle::setStrokeSize(const float& strokeSize)
+	{
+		this->strokeSize = strokeSize;
+	}
+
+	void Rectangle::roundRenderValue(const bool&& flag)
+	{
+		this->roundValue = flag;
 	}
 
 	void Rectangle::draw()
