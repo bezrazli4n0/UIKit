@@ -93,6 +93,8 @@ namespace UIKit
 			void setTitleBarArea(const int&& areaY);
 			void setTitleBarArea(const int& areaY);
 
+			void minimize();
+
 			void onClose(WidgetCallback callback);
 
 			void updateWindow();

@@ -575,6 +575,11 @@ namespace UIKit::UI
 		this->titleBarArea = areaY;
 	}
 
+	void Window::minimize()
+	{
+		ShowWindow(this->windowHandle, SW_MINIMIZE);
+	}
+
 	void Window::onClose(WidgetCallback callback)
 	{
 		this->onCloseCallback = callback;
