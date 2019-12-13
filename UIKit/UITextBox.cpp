@@ -271,16 +271,23 @@ namespace UIKit::UI
 
 	void TextBox::onMouseUp(const int& xPos, const int& yPos)
 	{
-		this->mousePressed = false;
+		if (this->active)
+		{
+			this->mousePressed = false;
 
-		float time = timeGetTime() / 1000.f;
-		const float doubleClickInterval = 0.3f;
+			float time = timeGetTime() / 1000.f;
+			const float doubleClickInterval = 0.3f;
 
-		if (time - this->lastClickTime < doubleClickInterval)
-			if (lastSelectLength == 0)
-				this->select(SelectMode::all);
+			if (time - this->lastClickTime < doubleClickInterval)
+				if (lastSelectLength == 0)
+					this->select(SelectMode::all);
 
-		this->lastClickTime = time;
+			this->lastClickTime = time;
+
+			POINT pt{};
+			GetCursorPos(&pt);
+			SetCursorPos(pt.x, pt.y);
+		}
 	}
 
 	void TextBox::onMouseDown(const int& xPos, const int& yPos)
@@ -295,6 +302,7 @@ namespace UIKit::UI
 			this->active = false;
 			this->scrollY = 0;
 			this->scrollX = 0;
+			return;
 		}
 
 		this->isOnScroll = false;
