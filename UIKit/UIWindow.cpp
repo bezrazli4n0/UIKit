@@ -12,7 +12,7 @@ namespace UIKit::UI
 		WNDCLASSEX wc{ sizeof(wc) };
 		wc.cbClsExtra = 0;
 		wc.cbWndExtra = 0;
-		wc.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
+		wc.hbrBackground = nullptr;// reinterpret_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
 		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
 		wc.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
@@ -24,7 +24,6 @@ namespace UIKit::UI
 
 		if (!RegisterClassEx(&wc))
 			return false;
-
 
 		auto [correctedWidth, correctedHeight] = this->getCorrectedWindowSize();
 
@@ -204,6 +203,12 @@ namespace UIKit::UI
 				this->onKey(wParam);
 			}
 			return 0;
+
+			case WM_MOVING:
+			{
+				this->updateWindow();
+			}
+			break;
 
 			case WM_SETCURSOR:
 			{

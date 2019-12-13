@@ -64,7 +64,9 @@ namespace UIKit
 
 	void App::exitApp()
 	{
+		for (auto& window : *UI::Window::getWindows())
+			window->show(false);
+
 		this->appRunning = false;
 	}
 }
-

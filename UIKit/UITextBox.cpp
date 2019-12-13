@@ -339,7 +339,12 @@ namespace UIKit::UI
 		if (this->mouseHover)
 			SetCursor(this->hBeamCursor);
 		else if (this->active && this->mousePressed)
-			SetCursor(this->hBeamCursor);
+		{
+			if ((GetKeyState(VK_LBUTTON) & 0x100) != 0)
+				SetCursor(this->hBeamCursor);
+			else
+				return false;
+		}
 		else
 			return false;
 
