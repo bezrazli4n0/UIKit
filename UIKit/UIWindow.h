@@ -4,6 +4,7 @@
 #include "UIRenderer.h"
 #include <Windows.h>
 #include <list>
+#include <vector>
 
 namespace UIKit
 {
@@ -34,6 +35,7 @@ namespace UIKit
 			D2D1_COLOR_F windowBackgroundColor{ D2D1::ColorF(D2D1::ColorF::White) };
 			HRGN hRoundedRgn{};
 			int titleBarArea{};
+			static inline std::vector<Window*> uiWindows{};
 
 		private:
 			bool createWindow();
@@ -74,6 +76,8 @@ namespace UIKit
 
 			void setBackgroundColor(const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a = 255);
 			void setBackgroundColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a = 255);
+
+			static std::vector<Window*>* getWindows();
 
 			void addWidget(Widget* pWidget);
 			void removeWidget(const std::wstring&& widgetID);

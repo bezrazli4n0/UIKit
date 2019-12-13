@@ -1,6 +1,5 @@
 #include "UIApp.h"
 #include "UIWindow.h"
-#include "UIConst.h"
 #include "UIGraphics.h"
 
 #include <Windows.h>
@@ -45,14 +44,16 @@ namespace UIKit
 				if (lWait <= 1)
 				{
 					uiNextCall = ms + uiFpsLock;
-					SendMessage(msg.hwnd, WM_UPDATE_AND_RENDER, 0, 0);
+					for (auto& window : *UI::Window::getWindows())
+						window->updateWindow();
 				}
 				else
 				{
 					if (MsgWaitForMultipleObjects(0, NULL, FALSE, lWait, QS_ALLEVENTS) == WAIT_TIMEOUT)
 					{
 						uiNextCall = GetTickCount() + uiFpsLock;
-						SendMessage(msg.hwnd, WM_UPDATE_AND_RENDER, 0, 0);
+						for (auto& window : *UI::Window::getWindows())
+							window->updateWindow();
 					}
 				}
 			}

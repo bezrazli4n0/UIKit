@@ -30,9 +30,6 @@
     <ClInclude Include="UIApp.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="UIConst.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="UIRenderer.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>

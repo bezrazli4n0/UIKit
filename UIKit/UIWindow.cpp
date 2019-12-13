@@ -1,7 +1,6 @@
 #pragma comment(lib, "dwmapi")
 
 #include "UIWindow.h"
-#include "UIConst.h"
 #include "UIGraphicsHelper.hpp"
 #include <algorithm>
 #include <dwmapi.h>
@@ -298,12 +297,6 @@ namespace UIKit::UI
 					this->onCloseCallback(this);
 			}
 			return 0;
-
-			case WM_UPDATE_AND_RENDER:
-			{
-				this->updateWindow();
-			}
-			return 0;
 		}
 
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -351,6 +344,7 @@ namespace UIKit::UI
 
 		this->windowClass = this->widgetID;
 		this->createWindow();
+		uiWindows.push_back(this);
 	}
 
 	Window::Window(const std::wstring& windowClass, const std::wstring& windowTitle, windowOptions* pWindowOptions, const unsigned short& width, const unsigned short& height, const unsigned short& x, const unsigned short& y)
@@ -370,6 +364,7 @@ namespace UIKit::UI
 
 		this->windowClass = this->widgetID;
 		this->createWindow();
+		uiWindows.push_back(this);
 	}
 
 	Window::~Window()
@@ -384,6 +379,10 @@ namespace UIKit::UI
 			delete this->pRenderer;
 			this->pRenderer = nullptr;
 		}
+
+		uiWindows.erase(std::remove_if(std::begin(uiWindows), std::end(uiWindows), [&](Window* pWindow) {
+			return pWindow->getWidgetID() == this->getWidgetID();
+		}), std::end(uiWindows));
 	}
 
 	const std::wstring& Window::getTitle() const
@@ -488,6 +487,11 @@ namespace UIKit::UI
 	void Window::setBackgroundColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a)
 	{
 		this->windowBackgroundColor = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+	}
+
+	std::vector<Window*>* Window::getWindows()
+	{
+		return &uiWindows;
 	}
 
 	void Window::addWidget(Widget* pWidget)
