@@ -68,11 +68,15 @@ namespace UIKit::UI
 		return WidgetPoints { static_cast<float>(rc.right - rc.left), static_cast<float>(rc.bottom - rc.top) };
 	}
 
-	void Window::update()
+	void Window::sortWidgets()
 	{
 		this->windowWidgets.sort([](Widget* lhs, Widget* rhs) {
 			return lhs->getZIndex() < rhs->getZIndex();
 		});
+	}
+
+	void Window::update()
+	{
 	}
 
 	void Window::render()
@@ -523,6 +527,32 @@ namespace UIKit::UI
 			}
 			return false;
 		}));
+	}
+
+	void Window::setZIndex(const std::wstring&& widgetID, const int&& z)
+	{
+		for (const auto& widget : this->windowWidgets)
+		{
+			if (widget->getWidgetID() == widgetID)
+			{
+				widget->zIndex = z;
+				this->sortWidgets();
+				break;
+			}
+		}
+	}
+
+	void Window::setZIndex(const std::wstring& widgetID, const int& z)
+	{
+		for (const auto& widget : this->windowWidgets)
+		{
+			if (widget->getWidgetID() == widgetID)
+			{
+				widget->zIndex = z;
+				this->sortWidgets();
+				break;
+			}
+		}
 	}
 
 	void Window::show(bool flag)

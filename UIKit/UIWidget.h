@@ -63,8 +63,6 @@ namespace UIKit
 			virtual void show(bool flag = true);
 			
 			int getZIndex() const;
-			void setZIndex(const int&& z);
-			void setZIndex(const int& z);
 
 			bool isVisible() const;
 			bool isHandleMouse() const;

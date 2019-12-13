@@ -40,6 +40,7 @@ namespace UIKit
 		private:
 			bool createWindow();
 			WidgetPoints getCorrectedWindowSize();
+			void sortWidgets();
 
 			virtual void update();
 			virtual void render();
@@ -82,6 +83,9 @@ namespace UIKit
 			void addWidget(Widget* pWidget);
 			void removeWidget(const std::wstring&& widgetID);
 			void removeWidget(const std::wstring& widgetID);
+
+			void setZIndex(const std::wstring&& widgetID, const int&& z);
+			void setZIndex(const std::wstring& widgetID, const int& z);
 
 			virtual void show(bool flag = true);
 			HWND getHandle() const;

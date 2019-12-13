@@ -154,16 +154,6 @@ namespace UIKit::UI
 		return this->zIndex;
 	}
 
-	void Widget::setZIndex(const int&& z)
-	{
-		this->zIndex = z;
-	}
-
-	void Widget::setZIndex(const int& z)
-	{
-		this->zIndex = z;
-	}
-	
 	bool Widget::isVisible() const
 	{
 		return this->visible;
