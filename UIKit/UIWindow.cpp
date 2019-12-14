@@ -256,7 +256,7 @@ namespace UIKit::UI
 					// frame, but keeps the window shadow.
 					if (wParam == TRUE)
 					{
-						SetWindowLong(hWnd, DWL_MSGRESULT, 0);
+						SetWindowLong(hWnd, 0, 0);
 						return TRUE;
 					}
 					return FALSE;

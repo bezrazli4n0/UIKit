@@ -6,9 +6,9 @@
 
 namespace UIKit
 {
-	App::App()
+	App::App(const bool customDPI, const float customDpiX, const float customDpiY)
 	{
-		Graphics::Core::initCore();
+		Graphics::Core::initCore(customDPI, customDpiX, customDpiY);
 	}
 
 	App::~App()

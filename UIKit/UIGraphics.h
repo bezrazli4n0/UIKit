@@ -39,7 +39,7 @@ namespace UIKit
 			static ID2D1Factory1* getFactory();
 			static IDWriteFactory* getDWriteFactory();
 			static IWICImagingFactory* getWICFactory();
-			static bool initCore();
+			static bool initCore(const bool customDPI = false, const float customDpiX = 96.0f, const float customDpiY = 96.0f);
 			static void freeCore();
 
 		};

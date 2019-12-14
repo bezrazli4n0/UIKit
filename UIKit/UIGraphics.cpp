@@ -25,7 +25,7 @@ namespace UIKit::Graphics
 		return pIWICFactory;
 	}
 
-	bool Core::initCore()
+	bool Core::initCore(const bool customDPI, const float customDpiX, const float customDpiY)
 	{
 		CoInitialize(0);
 
@@ -42,7 +42,13 @@ namespace UIKit::Graphics
 		if (!SUCCEEDED(DWriteCreateFactory(DWRITE_FACTORY_TYPE::DWRITE_FACTORY_TYPE_ISOLATED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&pDWriteFactory))))
 			return false;
 
-		pD2D1Factory->GetDesktopDpi(&dpiX, &dpiY);
+		if (customDPI)
+		{
+			DPI::dpiX = customDpiX;
+			DPI::dpiY = customDpiY;
+		}
+		else
+			pD2D1Factory->GetDesktopDpi(&DPI::dpiX, &DPI::dpiY);
 
 		static const D3D_FEATURE_LEVEL levelAttempts[] =
 		{

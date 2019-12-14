@@ -44,8 +44,8 @@ namespace UIKit::Graphics
 			D2D1::BitmapProperties1(
 				D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
 				D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
-				dpiX,
-				dpiY
+				DPI::dpiX,
+				DPI::dpiY
 			);
 
 		this->pDXGISwapChain->GetBuffer(0, IID_PPV_ARGS(&this->pDXGISurface));
@@ -79,8 +79,8 @@ namespace UIKit::Graphics
 			D2D1::BitmapProperties1(
 				D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
 				D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
-				dpiX,
-				dpiY
+				DPI::dpiX,
+				DPI::dpiY
 			);
 
 		this->pDXGISwapChain->GetBuffer(0, IID_PPV_ARGS(&this->pDXGISurface));

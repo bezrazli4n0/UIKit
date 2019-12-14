@@ -8,7 +8,7 @@ namespace UIKit
 		bool appRunning{ true };
 
 	public:
-		App();
+		App(const bool customDPI = false, const float customDpiX = 96.0f, const float customDpiY = 96.0f);
 		~App();
 
 		int runApp();
