@@ -2,6 +2,7 @@
 
 #include "UIWindow.h"
 #include "UIGraphicsHelper.hpp"
+#include "UILayout.h"
 #include <algorithm>
 #include <dwmapi.h>
 
@@ -152,12 +153,26 @@ namespace UIKit::UI
 		this->pRenderer->getContext()->BeginDraw();
 		this->pRenderer->getContext()->Clear(this->windowBackgroundColor);
 
-		for (const auto& widget : this->windowWidgets)
+		if (this->windowLayout != nullptr)
 		{
-			if (widget->isVisible())
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
 			{
-				widget->update();
-				widget->render();
+				if (widgetInfo.pWidget->isVisible())
+				{
+					widgetInfo.pWidget->update();
+					widgetInfo.pWidget->render();
+				}
+			}
+		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+			{
+				if (widget->isVisible())
+				{
+					widget->update();
+					widget->render();
+				}
 			}
 		}
 
@@ -371,6 +386,13 @@ namespace UIKit::UI
 
 				if (this->pRenderer != nullptr)
 					this->pRenderer->resize();
+
+				if (this->windowLayout != nullptr)
+				{
+					this->windowLayout->width = this->width;
+					this->windowLayout->height = this->height;
+					this->windowLayout->calculateLayout();
+				}
 			}
 			return 0;
 
@@ -452,6 +474,22 @@ namespace UIKit::UI
 
 	Window::~Window()
 	{
+		if (this->windowLayout != nullptr)
+		{
+			for (const auto& widget : this->windowLayout->widgetCollection)
+				widget.pWidget->onDetach();
+
+			this->windowLayout->widgetCollection.clear();
+			this->windowLayout = nullptr;
+		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+				widget->onDetach();
+
+			this->windowWidgets.clear();
+		}
+
 		UnregisterClass(this->windowClass.c_str(), nullptr);
 
 		if (this->roundedWindow.roundedWindow)
@@ -579,9 +617,12 @@ namespace UIKit::UI
 
 	void Window::addWidget(Widget* pWidget)
 	{
-		pWidget->pRT = this->pRenderer->getContext();
-		this->windowWidgets.push_back(pWidget);
-		pWidget->onAttach();
+		if (this->windowLayout == nullptr)
+		{
+			pWidget->pRT = this->pRenderer->getContext();
+			this->windowWidgets.push_back(pWidget);
+			pWidget->onAttach();
+		}
 	}
 
 	void Window::removeWidget(const std::wstring&& widgetID)
@@ -653,6 +694,68 @@ namespace UIKit::UI
 	void Window::setTitleBarArea(const int& areaY)
 	{
 		this->titleBarArea = areaY;
+	}
+
+	Widget* Window::getWidget(const std::wstring&& widgetID)
+	{
+		if (this->windowLayout != nullptr)
+		{
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
+			{
+				if (widgetInfo.pWidget->getWidgetID() == widgetID)
+					return widgetInfo.pWidget;
+			}
+		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+			{
+				if (widget->getWidgetID() == widgetID)
+					return widget;
+			}
+		}
+
+		return nullptr;
+	}
+
+	Widget* Window::getWidget(const std::wstring& widgetID)
+	{
+		if (this->windowLayout != nullptr)
+		{
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
+			{
+				if (widgetInfo.pWidget->getWidgetID() == widgetID)
+					return widgetInfo.pWidget;
+			}
+		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+			{
+				if (widget->getWidgetID() == widgetID)
+					return widget;
+			}
+		}
+
+		return nullptr;
+	}
+
+	void Window::setLayout(Layout* pLayout)
+	{
+		if (pLayout != nullptr)
+		{
+			for (const auto& widgetInfo : pLayout->widgetCollection)
+			{
+				widgetInfo.pWidget->pRT = this->pRenderer->getContext();
+				widgetInfo.pWidget->onAttach();
+			}
+
+			pLayout->width = this->width;
+			pLayout->height = this->height;
+			pLayout->calculateLayout();
+
+			this->windowLayout = pLayout;
+		}
 	}
 
 	void Window::minimize()

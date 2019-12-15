@@ -10,6 +10,8 @@ namespace UIKit
 {
 	namespace UI
 	{
+		class Layout;
+
 		class Window : public Widget
 		{
 		public:
@@ -37,6 +39,7 @@ namespace UIKit
 			int titleBarArea{};
 			static inline std::vector<Window*> uiWindows{};
 			Widget* pTabWidget{};
+			Layout* windowLayout{};
 
 		private:
 			bool createWindow();
@@ -94,6 +97,11 @@ namespace UIKit
 
 			void setTitleBarArea(const int&& areaY);
 			void setTitleBarArea(const int& areaY);
+
+			Widget* getWidget(const std::wstring&& widgetID);
+			Widget* getWidget(const std::wstring& widgetID);
+
+			void setLayout(Layout* pLayout);
 
 			void minimize();
 
