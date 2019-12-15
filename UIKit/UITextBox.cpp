@@ -53,12 +53,10 @@ namespace UIKit::UI
 	void TextBox::onAttach()
 	{
 		this->pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &this->pBrush);
-		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x - this->expandedMouseAreaX, this->y, this->x + this->width + this->expandedMouseAreaX, this->y + this->height), 0.0f, 0.0f), &this->pRoundRectGeometry);
 	}
 
 	void TextBox::onDetach()
 	{
-		Graphics::SafeRelease(&this->pRoundRectGeometry);
 		Graphics::SafeRelease(&this->pBrush);
 		Graphics::SafeRelease(&this->pTextLayout);
 	}
@@ -744,6 +742,12 @@ namespace UIKit::UI
 		return static_cast<bool>(contains);
 	}
 
+	void TextBox::recreateGeometry()
+	{
+		Graphics::SafeRelease(&this->pRoundRectGeometry);
+		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x - this->expandedMouseAreaX, this->y, this->x + this->width + this->expandedMouseAreaX, this->y + this->height), 0.0f, 0.0f), &this->pRoundRectGeometry);
+	}
+
 	void TextBox::fillSelectedRange()
 	{
 		UINT32 actualHitTestCount = 0;
@@ -820,6 +824,8 @@ namespace UIKit::UI
 		this->hBeamCursor = LoadCursor(nullptr, IDC_IBEAM);
 		this->tabStop = isTabStop;
 
+		this->recreateGeometry();
+
 		if (this->password)
 			this->passwordText.insert(this->caretPosition, this->text.length(), this->passwordChar[0]);
 	}
@@ -831,6 +837,8 @@ namespace UIKit::UI
 		this->handleMouse = true;
 		this->hBeamCursor = LoadCursor(nullptr, IDC_IBEAM);
 		this->tabStop = isTabStop;
+
+		this->recreateGeometry();
 
 		if (this->password)
 			this->passwordText.insert(this->caretPosition, this->text.length(), this->passwordChar[0]);
@@ -900,6 +908,86 @@ namespace UIKit::UI
 		this->needUpdate = true;
 	}
 
+	void TextBox::setSizeInDIP(const WidgetPoints&& widgetSizeDIP)
+	{
+		auto [width, height] = widgetSizeDIP;
+		this->width = width;
+		this->height = height;
+		this->recreateGeometry();
+
+		this->needUpdate = true;
+	}
+
+	void TextBox::setSizeInDIP(const WidgetPoints& widgetSizeDIP)
+	{
+		auto [width, height] = widgetSizeDIP;
+		this->width = width;
+		this->height = height;
+		this->recreateGeometry();
+
+		this->needUpdate = true;
+	}
+
+	void TextBox::setSizeInPixel(const WidgetPoints&& widgetSize)
+	{
+		auto [width, height] = widgetSize;
+		this->width = Graphics::pixelToDipX(width);
+		this->height = Graphics::pixelToDipY(height);
+		this->recreateGeometry();
+
+		this->needUpdate = true;
+	}
+
+	void TextBox::setSizeInPixel(const WidgetPoints& widgetSize)
+	{
+		auto [width, height] = widgetSize;
+		this->width = Graphics::pixelToDipX(width);
+		this->height = Graphics::pixelToDipY(height);
+		this->recreateGeometry();
+
+		this->needUpdate = true;
+	}
+
+	void TextBox::setPosInDIP(const WidgetPoints&& widgetPosDIP)
+	{
+		auto [x, y] = widgetPosDIP;
+		this->x = x;
+		this->y = y;
+		this->recreateGeometry();
+
+		this->needUpdate = true;
+	}
+
+	void TextBox::setPosInDIP(const WidgetPoints& widgetPosDIP)
+	{
+		auto [x, y] = widgetPosDIP;
+		this->x = x;
+		this->y = y;
+		this->recreateGeometry();
+
+		this->needUpdate = true;
+	}
+
+	void TextBox::setPosInPixel(const WidgetPoints&& widgetPos)
+	{
+		auto [x, y] = widgetPos;
+		this->x = Graphics::pixelToDipX(x);
+		this->y = Graphics::pixelToDipY(y);
+		this->recreateGeometry();
+
+		this->needUpdate = true;
+	}
+
+	void TextBox::setPosInPixel(const WidgetPoints& widgetPos)
+	{
+		auto [x, y] = widgetPos;
+		this->x = Graphics::pixelToDipX(x);
+		this->y = Graphics::pixelToDipY(y);
+		this->recreateGeometry();
+
+		this->needUpdate = true;
+	}
+
 	void TextBox::draw()
 	{
 		if (this->isVisible() && this->pRT != nullptr)
@@ -918,14 +1006,12 @@ namespace UIKit::UI
 	void TextBox::expandMouseArea(const float&& areaX)
 	{
 		this->expandedMouseAreaX = Graphics::pixelToDipX(areaX);
-		Graphics::SafeRelease(&this->pRoundRectGeometry);
-		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x - this->expandedMouseAreaX, this->y, this->x + this->width + this->expandedMouseAreaX, this->y + this->height), 0.0f, 0.0f), &this->pRoundRectGeometry);
+		this->recreateGeometry();
 	}
 
 	void TextBox::expandMouseArea(const float& areaX)
 	{
 		this->expandedMouseAreaX = Graphics::pixelToDipX(areaX);
-		Graphics::SafeRelease(&this->pRoundRectGeometry);
-		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x - this->expandedMouseAreaX, this->y, this->x + this->width + this->expandedMouseAreaX, this->y + this->height), 0.0f, 0.0f), &this->pRoundRectGeometry);
+		this->recreateGeometry();
 	}
 }
