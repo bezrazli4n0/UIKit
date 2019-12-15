@@ -44,6 +44,10 @@ namespace UIKit::UI
 	{
 	}
 
+	void Widget::onTabStop(bool flag)
+	{
+	}
+
 	bool Widget::updateCursor()
 	{
 		return false;
@@ -169,9 +173,9 @@ namespace UIKit::UI
 		return this->handleKeyboard;
 	}
 
-	bool Widget::isHandleTab() const
+	bool Widget::isTabStop() const
 	{
-		return this->handleTab;
+		return this->tabStop;
 	}
 
 	bool Widget::isActive() const

@@ -74,6 +74,75 @@ namespace UIKit::UI
 		});
 	}
 
+	bool Window::processTabKey()
+	{
+		bool testFlag{};
+		for (const auto& widget : this->windowWidgets)
+		{
+			testFlag = widget->isTabStop();
+			if (testFlag)
+				break;
+		}
+		if (!testFlag)
+			return false;
+
+		if (this->pTabWidget == nullptr)
+		{
+			for (auto it = this->windowWidgets.rbegin(); it != this->windowWidgets.rend(); ++it)
+			{
+				auto widget = (*it);
+
+				if (widget->isTabStop())
+				{
+					for (const auto& tabbedWidgets : this->windowWidgets)
+						if (tabbedWidgets->isTabStop())
+							tabbedWidgets->onTabStop(false);
+
+					widget->onTabStop(true);
+					this->pTabWidget = widget;
+					return true;
+				}
+			}
+		}
+		else
+		{
+			for (const auto& tabbedWidgets : this->windowWidgets)
+				if (tabbedWidgets->isTabStop())
+					tabbedWidgets->onTabStop(false);
+
+			auto idx{ -1 };
+			auto currentTabIt = std::find_if(std::rbegin(this->windowWidgets), std::rend(this->windowWidgets), [&](Widget* pWidget) {
+				idx++;
+				return pWidget->getWidgetID() == this->pTabWidget->getWidgetID();
+			});
+
+			while (true)
+			{
+				currentTabIt = std::next(currentTabIt);
+				idx++;
+
+				if (idx >= static_cast<int>(this->windowWidgets.size()))
+				{
+					idx = -1;
+					currentTabIt = std::rbegin(this->windowWidgets);
+					if ((*currentTabIt)->isTabStop())
+						break;
+
+					continue;
+				}
+
+				if ((*currentTabIt)->isTabStop())
+					break;
+			}
+
+			(*currentTabIt)->onTabStop(true);
+			this->pTabWidget = *currentTabIt;
+			return true;
+		}
+
+		return false;
+	}
+
 	void Window::update()
 	{
 	}
@@ -109,9 +178,14 @@ namespace UIKit::UI
 	{
 		for (const auto& widget : this->windowWidgets)
 		{
+			if (this->pTabWidget != nullptr)
+				if (widget->isTabStop())
+					widget->onTabStop(false);
+
 			if (widget->isVisible() && widget->isHandleMouse())
 				widget->onMouseDown(xPos, yPos);
 		}
+		this->pTabWidget = nullptr;
 	}
 
 	void Window::onMouseMove(const int& xPos, const int& yPos)
@@ -136,13 +210,19 @@ namespace UIKit::UI
 	{
 		for (auto& widget : this->windowWidgets)
 		{
-			if (widget->isVisible() && widget->isHandleKeyboard())
+			if (widget->isVisible() && widget->isHandleKeyboard() && !(widget->isTabStop() && c == VK_TAB))
 				widget->onChar(c);
 		}
 	}
 
 	void Window::onKey(UINT32 vk)
 	{
+		if (vk == VK_TAB)
+		{
+			if (this->processTabKey())
+				return;
+		}
+
 		for (auto& widget : this->windowWidgets)
 		{
 			if (widget->isVisible() && widget->isHandleKeyboard())
@@ -182,13 +262,13 @@ namespace UIKit::UI
 
 			case WM_LBUTTONUP:
 			{
-				this->onMouseUp(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(LOWORD(lParam)))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(HIWORD(lParam)))));
+				this->onMouseUp(static_cast<const int&>(LOWORD(lParam)), static_cast<const int&>(HIWORD(lParam)));
 			}
 			return 0;
 
 			case WM_MOUSEWHEEL:
 			{
-				this->onMouseScroll(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(LOWORD(lParam)))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(HIWORD(lParam)))), static_cast<short>(HIWORD(wParam)));
+				this->onMouseScroll(static_cast<const int&>(LOWORD(lParam)), static_cast<const int&>(HIWORD(lParam)), static_cast<short>(HIWORD(wParam)));
 			}
 			return 0;
 
@@ -218,7 +298,7 @@ namespace UIKit::UI
 			{
 				POINT pt{ LOWORD(lParam), HIWORD(lParam) };
 				ScreenToClient(hWnd, &pt);
-				this->onMouseDown(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(pt.x))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(pt.y))));
+				this->onMouseDown(static_cast<const int&>(pt.x), static_cast<const int&>(pt.y));
 			}
 			break;
 
@@ -226,7 +306,7 @@ namespace UIKit::UI
 			{
 				POINT pt{ LOWORD(lParam), HIWORD(lParam) };
 				ScreenToClient(hWnd, &pt);
-				this->onMouseUp(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(pt.x))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(pt.y))));
+				this->onMouseUp(static_cast<const int&>(pt.x), static_cast<const int&>(pt.y));
 			}
 			break;
 
@@ -266,14 +346,14 @@ namespace UIKit::UI
 
 			case WM_MOUSEMOVE:
 			{
-				this->onMouseMove(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(LOWORD(lParam)))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(HIWORD(lParam)))));
+				this->onMouseMove(static_cast<const int&>(LOWORD(lParam)), static_cast<const int&>(HIWORD(lParam)));
 			}
 			return 0;
 
 			case WM_LBUTTONDBLCLK:
 			case WM_LBUTTONDOWN:
 			{
-				this->onMouseDown(static_cast<const int&>(Graphics::dipToPixelX(static_cast<float>(LOWORD(lParam)))), static_cast<const int&>(Graphics::dipToPixelY(static_cast<float>(HIWORD(lParam)))));
+				this->onMouseDown(static_cast<const int&>(LOWORD(lParam)), static_cast<const int&>(HIWORD(lParam)));
 			}
 			return 0;
 

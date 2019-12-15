@@ -53,7 +53,7 @@ namespace UIKit::UI
 	void TextBox::onAttach()
 	{
 		this->pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &this->pBrush);
-		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(Graphics::dipToPixelX(this->x) - this->expandedMouseAreaX, Graphics::dipToPixelY(this->y), Graphics::dipToPixelX(this->x + this->width) + this->expandedMouseAreaX, Graphics::dipToPixelY(this->y + this->height)), 0.0f, 0.0f), &this->pRoundRectGeometry);
+		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x - this->expandedMouseAreaX, this->y, this->x + this->width + this->expandedMouseAreaX, this->y + this->height), 0.0f, 0.0f), &this->pRoundRectGeometry);
 	}
 
 	void TextBox::onDetach()
@@ -307,7 +307,7 @@ namespace UIKit::UI
 
 		this->isOnScroll = false;
 		this->lastSelectLength = this->getSelectionRange().length;
-		this->setSelectionFromPoint(static_cast<float>(xPos + Graphics::dipToPixelX(this->scrollX)), static_cast<float>(yPos + Graphics::dipToPixelY(this->scrollY)), (GetKeyState(VK_SHIFT) & 0x80) == 0);
+		this->setSelectionFromPoint(static_cast<float>(xPos + this->scrollX), static_cast<float>(yPos + this->scrollY), (GetKeyState(VK_SHIFT) & 0x80) == 0);
 	}
 
 	void TextBox::onMouseMove(const int& xPos, const int& yPos)
@@ -318,7 +318,7 @@ namespace UIKit::UI
 			this->mouseHover = false;
 
 		if ((GetKeyState(MK_LBUTTON) & 0x100) != 0)
-			this->setSelectionFromPoint(static_cast<float>(xPos + Graphics::dipToPixelX(this->scrollX)), static_cast<float>(yPos + Graphics::dipToPixelY(this->scrollY)), false);
+			this->setSelectionFromPoint(static_cast<float>(xPos + this->scrollX), static_cast<float>(yPos + this->scrollY), false);
 	}
 
 	void TextBox::onMouseScroll(const int& xPos, const int& yPos, const short& delta)
@@ -357,6 +357,13 @@ namespace UIKit::UI
 			return false;
 
 		return true;
+	}
+
+	void TextBox::onTabStop(bool flag)
+	{
+		this->active = flag;
+		if (flag)
+			this->select(SelectMode::all);
 	}
 
 	DWRITE_TEXT_RANGE TextBox::getSelectionRange()
@@ -467,10 +474,10 @@ namespace UIKit::UI
 		BOOL isInside{};
 		DWRITE_HIT_TEST_METRICS caretMetrics{};
 
-		x -= Graphics::dipToPixelX(this->x);
-		y -= Graphics::dipToPixelY(this->y);
+		x -= this->x;
+		y -= this->y;
 
-		this->pTextLayout->HitTestPoint(Graphics::pixelToDipX(x), Graphics::pixelToDipY(y), &isTrailingHit, &isInside, &caretMetrics);
+		this->pTextLayout->HitTestPoint(x, y, &isTrailingHit, &isInside, &caretMetrics);
 
 		if (isTrailingHit)
 			this->caretPosition = caretMetrics.textPosition + caretMetrics.length;
@@ -805,23 +812,25 @@ namespace UIKit::UI
 			this->pRT->DrawTextLayout(D2D1::Point2F(this->x - this->scrollX, this->y), this->pTextLayout, this->pBrush);
 	}
 
-	TextBox::TextBox(const std::wstring&& textBoxID, const std::wstring&& text, const bool&& isMultiline, const bool&& isReadOnly, const bool&& isPassword, const float&& fontSize, const float&& width, const float&& height, const float&& x, const float&& y)
+	TextBox::TextBox(const std::wstring&& textBoxID, const std::wstring&& text, const bool&& isTabStop, const bool&& isMultiline, const bool&& isReadOnly, const bool&& isPassword, const float&& fontSize, const float&& width, const float&& height, const float&& x, const float&& y)
 		: text{ text }, multiline{ isMultiline }, readOnly{ isReadOnly }, password{ isPassword }, fontSize{ fontSize }, Widget(textBoxID, width, height, x, y)
 	{
 		this->handleKeyboard = true;
 		this->handleMouse = true;
 		this->hBeamCursor = LoadCursor(nullptr, IDC_IBEAM);
+		this->tabStop = isTabStop;
 
 		if (this->password)
 			this->passwordText.insert(this->caretPosition, this->text.length(), this->passwordChar[0]);
 	}
 
-	TextBox::TextBox(const std::wstring& textBoxID, const std::wstring& text, const bool& isMultiline, const bool& isReadOnly, const bool& isPassword, const float& fontSize, const float& width, const float& height, const float& x, const float& y)
+	TextBox::TextBox(const std::wstring& textBoxID, const std::wstring& text, const bool& isTabStop, const bool& isMultiline, const bool& isReadOnly, const bool& isPassword, const float& fontSize, const float& width, const float& height, const float& x, const float& y)
 		: text{ text }, multiline{ isMultiline }, readOnly{ isReadOnly }, password{ isPassword }, fontSize{ fontSize }, Widget(textBoxID, width, height, x, y)
 	{
 		this->handleKeyboard = true;
 		this->handleMouse = true;
 		this->hBeamCursor = LoadCursor(nullptr, IDC_IBEAM);
+		this->tabStop = isTabStop;
 
 		if (this->password)
 			this->passwordText.insert(this->caretPosition, this->text.length(), this->passwordChar[0]);
@@ -908,15 +917,15 @@ namespace UIKit::UI
 
 	void TextBox::expandMouseArea(const float&& areaX)
 	{
-		this->expandedMouseAreaX = areaX;
+		this->expandedMouseAreaX = Graphics::pixelToDipX(areaX);
 		Graphics::SafeRelease(&this->pRoundRectGeometry);
-		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(Graphics::dipToPixelX(this->x) - this->expandedMouseAreaX, Graphics::dipToPixelY(this->y), Graphics::dipToPixelX(this->x + this->width) + this->expandedMouseAreaX, Graphics::dipToPixelY(this->y + this->height)), 0.0f, 0.0f), &this->pRoundRectGeometry);
+		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x - this->expandedMouseAreaX, this->y, this->x + this->width + this->expandedMouseAreaX, this->y + this->height), 0.0f, 0.0f), &this->pRoundRectGeometry);
 	}
 
 	void TextBox::expandMouseArea(const float& areaX)
 	{
-		this->expandedMouseAreaX = areaX;
+		this->expandedMouseAreaX = Graphics::pixelToDipX(areaX);
 		Graphics::SafeRelease(&this->pRoundRectGeometry);
-		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(Graphics::dipToPixelX(this->x) - this->expandedMouseAreaX, Graphics::dipToPixelY(this->y), Graphics::dipToPixelX(this->x + this->width) + this->expandedMouseAreaX, Graphics::dipToPixelY(this->y + this->height)), 0.0f, 0.0f), &this->pRoundRectGeometry);
+		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x - this->expandedMouseAreaX, this->y, this->x + this->width + this->expandedMouseAreaX, this->y + this->height), 0.0f, 0.0f), &this->pRoundRectGeometry);
 	}
 }

@@ -59,8 +59,8 @@ namespace UIKit
 			static inline HCURSOR hBeamCursor{};
 
 		public:
-			TextBox(const std::wstring&& textBoxID, const std::wstring&& text = L"TextBox", const bool&& isMultiline = false, const bool&& isReadOnly = false, const bool&& isPassword = false, const float&& fontSize = 12.0f, const float&& width = 100.0f, const float&& height = 100.0f, const float&& x = 10.0f, const float&& y = 10.0f);
-			TextBox(const std::wstring& textBoxID, const std::wstring& text = L"TextBox", const bool& isMultiline = false, const bool& isReadOnly = false, const bool& isPassword = false, const float& fontSize = 12.0f, const float& width = 100.0f, const float& height = 100.0f, const float& x = 10.0f, const float& y = 10.0f);
+			TextBox(const std::wstring&& textBoxID, const std::wstring&& text = L"TextBox", const bool&& isTabStop = false, const bool&& isMultiline = false, const bool&& isReadOnly = false, const bool&& isPassword = false, const float&& fontSize = 12.0f, const float&& width = 100.0f, const float&& height = 100.0f, const float&& x = 10.0f, const float&& y = 10.0f);
+			TextBox(const std::wstring& textBoxID, const std::wstring& text = L"TextBox", const bool& isTabStop = false, const bool& isMultiline = false, const bool& isReadOnly = false, const bool& isPassword = false, const float& fontSize = 12.0f, const float& width = 100.0f, const float& height = 100.0f, const float& x = 10.0f, const float& y = 10.0f);
 			~TextBox();
 
 			void setTextColor(const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a = 255);
@@ -78,6 +78,8 @@ namespace UIKit
 			virtual void onMouseScroll(const int& xPos, const int& yPos, const short& delta);
 
 			virtual bool updateCursor();
+
+			virtual void onTabStop(bool flag);
 
 			std::wstring getText() const;
 

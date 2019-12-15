@@ -36,11 +36,13 @@ namespace UIKit
 			HRGN hRoundedRgn{};
 			int titleBarArea{};
 			static inline std::vector<Window*> uiWindows{};
+			Widget* pTabWidget{};
 
 		private:
 			bool createWindow();
 			WidgetPoints getCorrectedWindowSize();
 			void sortWidgets();
+			bool processTabKey();
 
 			virtual void update();
 			virtual void render();
