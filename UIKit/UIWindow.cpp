@@ -70,74 +70,151 @@ namespace UIKit::UI
 
 	void Window::sortWidgets()
 	{
-		this->windowWidgets.sort([](Widget* lhs, Widget* rhs) {
-			return lhs->getZIndex() < rhs->getZIndex();
-		});
+		if (this->windowLayout != nullptr)
+			std::sort(this->windowLayout->widgetCollection.begin(), this->windowLayout->widgetCollection.end(), [](Layout::WidgetInfo lhs, Layout::WidgetInfo rhs) { return lhs.pWidget->getZIndex() < lhs.pWidget->getZIndex(); });
+		else
+			this->windowWidgets.sort([](Widget* lhs, Widget* rhs) { return lhs->getZIndex() < rhs->getZIndex(); });
 	}
 
 	bool Window::processTabKey()
 	{
 		bool testFlag{};
-		for (const auto& widget : this->windowWidgets)
+		if (this->windowLayout != nullptr)
 		{
-			testFlag = widget->isTabStop();
-			if (testFlag)
-				break;
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
+			{
+				testFlag = widgetInfo.pWidget->isTabStop();
+				if (testFlag)
+					break;
+			}
+		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+			{
+				testFlag = widget->isTabStop();
+				if (testFlag)
+					break;
+			}
 		}
 		if (!testFlag)
 			return false;
 
 		if (this->pTabWidget == nullptr)
 		{
-			for (auto it = this->windowWidgets.rbegin(); it != this->windowWidgets.rend(); ++it)
+			if (this->windowLayout != nullptr)
 			{
-				auto widget = (*it);
-
-				if (widget->isTabStop())
+				for (auto it = this->windowLayout->widgetCollection.begin(); it != this->windowLayout->widgetCollection.end(); ++it)
 				{
-					for (const auto& tabbedWidgets : this->windowWidgets)
-						if (tabbedWidgets->isTabStop())
-							tabbedWidgets->onTabStop(false);
+					auto widget = (*it).pWidget;
 
-					widget->onTabStop(true);
-					this->pTabWidget = widget;
-					return true;
+					if (widget->isTabStop())
+					{
+						for (const auto& tabbedWidgets : this->windowWidgets)
+							if (tabbedWidgets->isTabStop())
+								tabbedWidgets->onTabStop(false);
+
+						widget->onTabStop(true);
+						this->pTabWidget = widget;
+						return true;
+					}
+				}
+
+			}
+			else
+			{
+				for (auto it = this->windowWidgets.rbegin(); it != this->windowWidgets.rend(); ++it)
+				{
+					auto widget = (*it);
+
+					if (widget->isTabStop())
+					{
+						for (const auto& tabbedWidgets : this->windowWidgets)
+							if (tabbedWidgets->isTabStop())
+								tabbedWidgets->onTabStop(false);
+
+						widget->onTabStop(true);
+						this->pTabWidget = widget;
+						return true;
+					}
 				}
 			}
 		}
 		else
 		{
-			for (const auto& tabbedWidgets : this->windowWidgets)
-				if (tabbedWidgets->isTabStop())
-					tabbedWidgets->onTabStop(false);
-
-			auto idx{ -1 };
-			auto currentTabIt = std::find_if(std::rbegin(this->windowWidgets), std::rend(this->windowWidgets), [&](Widget* pWidget) {
-				idx++;
-				return pWidget->getWidgetID() == this->pTabWidget->getWidgetID();
-			});
-
-			while (true)
+			if (this->windowLayout != nullptr)
 			{
-				currentTabIt = std::next(currentTabIt);
-				idx++;
-
-				if (idx >= static_cast<int>(this->windowWidgets.size()))
-				{
-					idx = -1;
-					currentTabIt = std::rbegin(this->windowWidgets);
-					if ((*currentTabIt)->isTabStop())
-						break;
-
-					continue;
-				}
-
-				if ((*currentTabIt)->isTabStop())
-					break;
+				for (const auto& tabbedWidgets : this->windowLayout->widgetCollection)
+					if (tabbedWidgets.pWidget->isTabStop())
+						tabbedWidgets.pWidget->onTabStop(false);
+			}
+			else
+			{
+				for (const auto& tabbedWidgets : this->windowWidgets)
+					if (tabbedWidgets->isTabStop())
+						tabbedWidgets->onTabStop(false);
 			}
 
-			(*currentTabIt)->onTabStop(true);
-			this->pTabWidget = *currentTabIt;
+			auto idx{ -1 };
+			if (this->windowLayout != nullptr)
+			{
+				auto currentTabIt = std::find_if(std::begin(this->windowLayout->widgetCollection), std::end(this->windowLayout->widgetCollection), [&](Layout::WidgetInfo pWidgetInfo) {
+					idx++;
+					return pWidgetInfo.pWidget->getWidgetID() == this->pTabWidget->getWidgetID();
+				});
+
+				while (true)
+				{
+					currentTabIt = std::next(currentTabIt);
+					idx++;
+
+					if (idx >= static_cast<int>(this->windowLayout->widgetCollection.size()))
+					{
+						idx = -1;
+						currentTabIt = std::begin(this->windowLayout->widgetCollection);
+						if ((*currentTabIt).pWidget->isTabStop())
+							break;
+
+						continue;
+					}
+
+					if ((*currentTabIt).pWidget->isTabStop())
+						break;
+				}
+
+				(*currentTabIt).pWidget->onTabStop(true);
+				this->pTabWidget = (*currentTabIt).pWidget;
+			}
+			else
+			{
+				auto currentTabIt = std::find_if(std::rbegin(this->windowWidgets), std::rend(this->windowWidgets), [&](Widget* pWidget) {
+					idx++;
+					return pWidget->getWidgetID() == this->pTabWidget->getWidgetID();
+					});
+
+				while (true)
+				{
+					currentTabIt = std::next(currentTabIt);
+					idx++;
+
+					if (idx >= static_cast<int>(this->windowWidgets.size()))
+					{
+						idx = -1;
+						currentTabIt = std::rbegin(this->windowWidgets);
+						if ((*currentTabIt)->isTabStop())
+							break;
+
+						continue;
+					}
+
+					if ((*currentTabIt)->isTabStop())
+						break;
+				}
+
+				(*currentTabIt)->onTabStop(true);
+				this->pTabWidget = *currentTabIt;
+			}
+			
 			return true;
 		}
 
@@ -182,51 +259,95 @@ namespace UIKit::UI
 
 	void Window::onMouseUp(const int& xPos, const int& yPos)
 	{
-		for (const auto& widget : this->windowWidgets)
+		if (this->windowLayout != nullptr)
 		{
-			if (widget->isVisible() && widget->isHandleMouse())
-				widget->onMouseUp(xPos, yPos);
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
+				if (widgetInfo.pWidget->isVisible() && widgetInfo.pWidget->isHandleMouse())
+					widgetInfo.pWidget->onMouseUp(xPos, yPos);
+		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+				if (widget->isVisible() && widget->isHandleMouse())
+					widget->onMouseUp(xPos, yPos);
 		}
 	}
 
 	void Window::onMouseDown(const int& xPos, const int& yPos)
 	{
-		for (const auto& widget : this->windowWidgets)
+		if (this->windowLayout != nullptr)
 		{
-			if (this->pTabWidget != nullptr)
-				if (widget->isTabStop())
-					widget->onTabStop(false);
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
+			{
+				if (this->pTabWidget != nullptr)
+					if (widgetInfo.pWidget->isTabStop())
+						widgetInfo.pWidget->onTabStop(false);
 
-			if (widget->isVisible() && widget->isHandleMouse())
-				widget->onMouseDown(xPos, yPos);
+				if (widgetInfo.pWidget->isVisible() && widgetInfo.pWidget->isHandleMouse())
+					widgetInfo.pWidget->onMouseDown(xPos, yPos);
+			}
 		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+			{
+				if (this->pTabWidget != nullptr)
+					if (widget->isTabStop())
+						widget->onTabStop(false);
+
+				if (widget->isVisible() && widget->isHandleMouse())
+					widget->onMouseDown(xPos, yPos);
+			}
+		}
+
 		this->pTabWidget = nullptr;
 	}
 
 	void Window::onMouseMove(const int& xPos, const int& yPos)
 	{
-		for (const auto& widget : this->windowWidgets)
+		if (this->windowLayout != nullptr)
 		{
-			if (widget->isVisible() && widget->isHandleMouse())
-				widget->onMouseMove(xPos, yPos);
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
+				if (widgetInfo.pWidget->isVisible() && widgetInfo.pWidget->isHandleMouse())
+					widgetInfo.pWidget->onMouseMove(xPos, yPos);
+		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+				if (widget->isVisible() && widget->isHandleMouse())
+					widget->onMouseMove(xPos, yPos);
 		}
 	}
 
 	void Window::onMouseScroll(const int& xPos, const int& yPos, const short& delta)
 	{
-		for (const auto& widget : this->windowWidgets)
+		if (this->windowLayout != nullptr)
 		{
-			if (widget->isVisible() && widget->isHandleMouse())
-				widget->onMouseScroll(xPos, yPos, delta);
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
+				if (widgetInfo.pWidget->isVisible() && widgetInfo.pWidget->isHandleMouse())
+					widgetInfo.pWidget->onMouseScroll(xPos, yPos, delta);
+		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+				if (widget->isVisible() && widget->isHandleMouse())
+					widget->onMouseScroll(xPos, yPos, delta);
 		}
 	}
 
 	void Window::onChar(UINT32 c)
 	{
-		for (auto& widget : this->windowWidgets)
+		if (this->windowLayout != nullptr)
 		{
-			if (widget->isVisible() && widget->isHandleKeyboard() && !(widget->isTabStop() && c == VK_TAB))
-				widget->onChar(c);
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
+				if (widgetInfo.pWidget->isVisible() && widgetInfo.pWidget->isHandleKeyboard() && !(widgetInfo.pWidget->isTabStop() && c == VK_TAB))
+					widgetInfo.pWidget->onChar(c);
+		}
+		else
+		{
+			for (auto& widget : this->windowWidgets)
+				if (widget->isVisible() && widget->isHandleKeyboard() && !(widget->isTabStop() && c == VK_TAB))
+					widget->onChar(c);
 		}
 	}
 
@@ -238,22 +359,35 @@ namespace UIKit::UI
 				return;
 		}
 
-		for (auto& widget : this->windowWidgets)
+		if (this->windowLayout != nullptr)
 		{
-			if (widget->isVisible() && widget->isHandleKeyboard())
-				widget->onKey(vk);
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
+				if (widgetInfo.pWidget->isVisible() && widgetInfo.pWidget->isHandleKeyboard())
+					widgetInfo.pWidget->onKey(vk);
+		}
+		else
+		{
+			for (auto& widget : this->windowWidgets)
+				if (widget->isVisible() && widget->isHandleKeyboard())
+					widget->onKey(vk);
 		}
 	}
 
 	bool Window::updateCursor()
 	{
-		for (const auto& widget : this->windowWidgets)
+		if (this->windowLayout != nullptr)
 		{
-			if (widget->isVisible() && widget->isHandleMouse())
-			{
-				if (widget->updateCursor())
-					return true;
-			}
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
+				if (widgetInfo.pWidget->isVisible() && widgetInfo.pWidget->isHandleMouse())
+					if (widgetInfo.pWidget->updateCursor())
+						return true;
+		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+				if (widget->isVisible() && widget->isHandleMouse())
+					if (widget->updateCursor())
+						return true;
 		}
 
 		return false;
@@ -651,26 +785,56 @@ namespace UIKit::UI
 
 	void Window::setZIndex(const std::wstring&& widgetID, const int&& z)
 	{
-		for (const auto& widget : this->windowWidgets)
+		if (this->windowLayout != nullptr)
 		{
-			if (widget->getWidgetID() == widgetID)
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
 			{
-				widget->zIndex = z;
-				this->sortWidgets();
-				break;
+				if (widgetInfo.pWidget->getWidgetID() == widgetID)
+				{
+					widgetInfo.pWidget->zIndex = z;
+					this->sortWidgets();
+					break;
+				}
+			}
+		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+			{
+				if (widget->getWidgetID() == widgetID)
+				{
+					widget->zIndex = z;
+					this->sortWidgets();
+					break;
+				}
 			}
 		}
 	}
 
 	void Window::setZIndex(const std::wstring& widgetID, const int& z)
 	{
-		for (const auto& widget : this->windowWidgets)
+		if (this->windowLayout != nullptr)
 		{
-			if (widget->getWidgetID() == widgetID)
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
 			{
-				widget->zIndex = z;
-				this->sortWidgets();
-				break;
+				if (widgetInfo.pWidget->getWidgetID() == widgetID)
+				{
+					widgetInfo.pWidget->zIndex = z;
+					this->sortWidgets();
+					break;
+				}
+			}
+		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+			{
+				if (widget->getWidgetID() == widgetID)
+				{
+					widget->zIndex = z;
+					this->sortWidgets();
+					break;
+				}
 			}
 		}
 	}

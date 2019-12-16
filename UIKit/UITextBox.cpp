@@ -11,14 +11,16 @@ namespace UIKit::UI
 		{
 			this->createTextLayout();
 			if (this->pTextLayout)
+			{
 				this->needUpdate = false;
 
-			DWRITE_TEXT_METRICS metrics{};
-			this->pTextLayout->GetMetrics(&metrics);
+				DWRITE_TEXT_METRICS metrics{};
+				this->pTextLayout->GetMetrics(&metrics);
 
-			this->maxScrollY = max(metrics.height - this->height, 0);
-			if (this->scrollY > this->maxScrollY)
-				this->scrollY = this->maxScrollY;
+				this->maxScrollY = max(metrics.height - this->height, 0);
+				if (this->scrollY > this->maxScrollY)
+					this->scrollY = this->maxScrollY;
+			}
 		}
 	}
 
@@ -723,7 +725,7 @@ namespace UIKit::UI
 			this->password ? this->passwordText.c_str() : this->text.c_str(),
 			static_cast<UINT32>(this->text.length()),
 			textFormat,
-			correctedWidth, this->height,
+			correctedWidth, (this->height < 0.0f ? 0.0f : this->height),
 			&this->pTextLayout
 		);
 

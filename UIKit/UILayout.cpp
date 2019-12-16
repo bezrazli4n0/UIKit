@@ -28,8 +28,8 @@ namespace UIKit::UI
 
 						auto ColSpan = widgetInfo.colSpan + 1;
 						auto RowSpan = widgetInfo.rowSpan + 1;
-						widgetInfo.pWidget->setPosInDIP({ xPos, yPos });
-						widgetInfo.pWidget->setSizeInDIP({ newWidth * ColSpan - Graphics::pixelToDipX(2.0f), newHeight * RowSpan - Graphics::pixelToDipY(2.0f) });
+						widgetInfo.pWidget->setPosInDIP({ xPos + this->xPadding, yPos + this->yPadding });
+						widgetInfo.pWidget->setSizeInDIP({ newWidth * ColSpan - this->xPadding * 2, newHeight * RowSpan - this->yPadding * 2 });
 					}
 				}
 			}
@@ -43,6 +43,18 @@ namespace UIKit::UI
 
 	Layout::~Layout()
 	{
+	}
+
+	void Layout::setPadding(const float&& x, const float&& y)
+	{
+		this->xPadding = Graphics::pixelToDipX(x);
+		this->yPadding = Graphics::pixelToDipY(y);
+	}
+
+	void Layout::setPadding(const float& x, const float& y)
+	{
+		this->xPadding = Graphics::pixelToDipX(x);
+		this->yPadding = Graphics::pixelToDipY(y);
 	}
 
 	void Layout::addWidget(Widget* pWidget, unsigned int row, unsigned int col, unsigned int rowSpan, unsigned int colSpan)

@@ -21,7 +21,7 @@ namespace UIKit
 
 			std::vector<float> rows{}, cols{};
 			std::vector<WidgetInfo> widgetCollection{};
-			float width{}, height{};
+			float width{}, height{}, xPadding{}, yPadding{};
 
 		private:
 			void calculateLayout();
@@ -29,6 +29,9 @@ namespace UIKit
 		public:
 			Layout(std::initializer_list<float> Rows, std::initializer_list<float> Cols);
 			~Layout();
+
+			void setPadding(const float&& x, const float&& y);
+			void setPadding(const float& x, const float& y);
 
 			void addWidget(Widget* pWidget, unsigned int row, unsigned int col, unsigned int rowSpan = 0, unsigned int colSpan = 0);
 
