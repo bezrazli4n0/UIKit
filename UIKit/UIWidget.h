@@ -37,6 +37,9 @@ namespace UIKit
 			virtual void onKey(UINT32 vk);
 			virtual void onTabStop(bool flag);
 
+			virtual void onPosChanged();
+			virtual void onSizeChanged();
+
 			virtual bool updateCursor();
 
 		public:

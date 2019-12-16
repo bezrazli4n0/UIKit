@@ -29,6 +29,9 @@ namespace UIKit
 			virtual void onAttach();
 			virtual void onDetach();
 
+			virtual void onPosChanged();
+			virtual void onSizeChanged();
+
 			DWRITE_TEXT_RANGE getSelectionRange();
 			void copyToClipboard();
 			void deleteSelection();
@@ -87,16 +90,6 @@ namespace UIKit
 
 			void setText(const std::wstring&& text);
 			void setText(const std::wstring& text);
-
-			virtual void setSizeInDIP(const WidgetPoints&& widgetSizeDIP);
-			virtual void setSizeInDIP(const WidgetPoints& widgetSizeDIP);
-			virtual void setSizeInPixel(const WidgetPoints&& widgetSize);
-			virtual void setSizeInPixel(const WidgetPoints& widgetSize);
-
-			virtual void setPosInDIP(const WidgetPoints&& widgetPosDIP);
-			virtual void setPosInDIP(const WidgetPoints& widgetPosDIP);
-			virtual void setPosInPixel(const WidgetPoints&& widgetPos);
-			virtual void setPosInPixel(const WidgetPoints& widgetPos);
 
 			void draw();
 			void setRT(ID2D1DeviceContext* pRT);

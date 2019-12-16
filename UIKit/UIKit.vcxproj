@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="UIApp.h" />
+    <ClInclude Include="UIClickObject.h" />
     <ClInclude Include="UIGraphics.h" />
     <ClInclude Include="UIGraphicsHelper.hpp" />
     <ClInclude Include="UILabel.h" />
@@ -154,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UIApp.cpp" />
+    <ClCompile Include="UIClickObject.cpp" />
     <ClCompile Include="UIGraphics.cpp" />
     <ClCompile Include="UILabel.cpp" />
     <ClCompile Include="UILayout.cpp" />

@@ -51,6 +51,9 @@
     <ClInclude Include="UILayout.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="UIClickObject.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UIGraphics.cpp">
@@ -84,6 +87,9 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="UILayout.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="UIClickObject.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

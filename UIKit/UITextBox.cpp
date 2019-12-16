@@ -63,6 +63,18 @@ namespace UIKit::UI
 		Graphics::SafeRelease(&this->pTextLayout);
 	}
 
+	void TextBox::onPosChanged()
+	{
+		this->recreateGeometry();
+		this->needUpdate = true;
+	}
+
+	void TextBox::onSizeChanged()
+	{
+		this->recreateGeometry();
+		this->needUpdate = true;
+	}
+
 	void TextBox::onChar(UINT32 c)
 	{
 		if ((c >= 0x20 || c == 9) && this->active && !this->readOnly)
@@ -907,86 +919,6 @@ namespace UIKit::UI
 			this->passwordText.clear();
 			this->passwordText.insert(0, this->text.length(), this->passwordChar[0]);
 		}
-		this->needUpdate = true;
-	}
-
-	void TextBox::setSizeInDIP(const WidgetPoints&& widgetSizeDIP)
-	{
-		auto [width, height] = widgetSizeDIP;
-		this->width = width;
-		this->height = height;
-		this->recreateGeometry();
-
-		this->needUpdate = true;
-	}
-
-	void TextBox::setSizeInDIP(const WidgetPoints& widgetSizeDIP)
-	{
-		auto [width, height] = widgetSizeDIP;
-		this->width = width;
-		this->height = height;
-		this->recreateGeometry();
-
-		this->needUpdate = true;
-	}
-
-	void TextBox::setSizeInPixel(const WidgetPoints&& widgetSize)
-	{
-		auto [width, height] = widgetSize;
-		this->width = Graphics::pixelToDipX(width);
-		this->height = Graphics::pixelToDipY(height);
-		this->recreateGeometry();
-
-		this->needUpdate = true;
-	}
-
-	void TextBox::setSizeInPixel(const WidgetPoints& widgetSize)
-	{
-		auto [width, height] = widgetSize;
-		this->width = Graphics::pixelToDipX(width);
-		this->height = Graphics::pixelToDipY(height);
-		this->recreateGeometry();
-
-		this->needUpdate = true;
-	}
-
-	void TextBox::setPosInDIP(const WidgetPoints&& widgetPosDIP)
-	{
-		auto [x, y] = widgetPosDIP;
-		this->x = x;
-		this->y = y;
-		this->recreateGeometry();
-
-		this->needUpdate = true;
-	}
-
-	void TextBox::setPosInDIP(const WidgetPoints& widgetPosDIP)
-	{
-		auto [x, y] = widgetPosDIP;
-		this->x = x;
-		this->y = y;
-		this->recreateGeometry();
-
-		this->needUpdate = true;
-	}
-
-	void TextBox::setPosInPixel(const WidgetPoints&& widgetPos)
-	{
-		auto [x, y] = widgetPos;
-		this->x = Graphics::pixelToDipX(x);
-		this->y = Graphics::pixelToDipY(y);
-		this->recreateGeometry();
-
-		this->needUpdate = true;
-	}
-
-	void TextBox::setPosInPixel(const WidgetPoints& widgetPos)
-	{
-		auto [x, y] = widgetPos;
-		this->x = Graphics::pixelToDipX(x);
-		this->y = Graphics::pixelToDipY(y);
-		this->recreateGeometry();
-
 		this->needUpdate = true;
 	}
 

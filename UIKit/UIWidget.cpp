@@ -48,6 +48,14 @@ namespace UIKit::UI
 	{
 	}
 
+	void Widget::onPosChanged()
+	{
+	}
+
+	void Widget::onSizeChanged()
+	{
+	}
+
 	bool Widget::updateCursor()
 	{
 		return false;
@@ -72,6 +80,7 @@ namespace UIKit::UI
 		auto [width, height] = widgetSizeDIP;
 		this->width = width;
 		this->height = height;
+		this->onSizeChanged();
 	}
 
 	void Widget::setSizeInDIP(const WidgetPoints& widgetSizeDIP)
@@ -79,6 +88,7 @@ namespace UIKit::UI
 		auto [width, height] = widgetSizeDIP;
 		this->width = width;
 		this->height = height;
+		this->onSizeChanged();
 	}
 
 	void Widget::setSizeInPixel(const WidgetPoints&& widgetSize)
@@ -86,6 +96,7 @@ namespace UIKit::UI
 		auto [width, height] = widgetSize;
 		this->width = Graphics::pixelToDipX(width);
 		this->height = Graphics::pixelToDipY(height);
+		this->onSizeChanged();
 	}
 
 	void Widget::setSizeInPixel(const WidgetPoints& widgetSize)
@@ -93,6 +104,7 @@ namespace UIKit::UI
 		auto [width, height] = widgetSize;
 		this->width = Graphics::pixelToDipX(width);
 		this->height = Graphics::pixelToDipY(height);
+		this->onSizeChanged();
 	}
 	
 	void Widget::setPosInDIP(const WidgetPoints&& widgetPosDIP)
@@ -100,6 +112,7 @@ namespace UIKit::UI
 		auto [x, y] = widgetPosDIP;
 		this->x = x;
 		this->y = y;
+		this->onPosChanged();
 	}
 
 	void Widget::setPosInDIP(const WidgetPoints& widgetPosDIP)
@@ -107,6 +120,7 @@ namespace UIKit::UI
 		auto [x, y] = widgetPosDIP;
 		this->x = x;
 		this->y = y;
+		this->onPosChanged();
 	}
 
 	void Widget::setPosInPixel(const WidgetPoints&& widgetPos)
@@ -114,6 +128,7 @@ namespace UIKit::UI
 		auto [x, y] = widgetPos;
 		this->x = Graphics::pixelToDipX(x);
 		this->y = Graphics::pixelToDipY(y);
+		this->onPosChanged();
 	}
 
 	void Widget::setPosInPixel(const WidgetPoints& widgetPos)
@@ -121,6 +136,7 @@ namespace UIKit::UI
 		auto [x, y] = widgetPos;
 		this->x = Graphics::pixelToDipX(x);
 		this->y = Graphics::pixelToDipY(y);
+		this->onPosChanged();
 	}
 
 	WidgetPoints Widget::getSizeInDIP() const
