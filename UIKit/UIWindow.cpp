@@ -108,35 +108,81 @@ namespace UIKit::UI
 				{
 					auto widget = (*it).pWidget;
 
-					if (widget->isTabStop())
+					if (widget->isTabStop() && !widget->isActive())
 					{
-						for (const auto& tabbedWidgets : this->windowWidgets)
-							if (tabbedWidgets->isTabStop())
-								tabbedWidgets->onTabStop(false);
+						for (const auto& tabbedWidgets : this->windowLayout->widgetCollection)
+							if (tabbedWidgets.pWidget->isTabStop())
+								tabbedWidgets.pWidget->onTabStop(false);
 
 						widget->onTabStop(true);
 						this->pTabWidget = widget;
 						return true;
 					}
 				}
-
 			}
 			else
 			{
-				for (auto it = this->windowWidgets.rbegin(); it != this->windowWidgets.rend(); ++it)
+				bool activeFlag{};
+				std::wstring activeId{};
+				for (const auto& widget : this->windowWidgets)
 				{
-					auto widget = (*it);
-
-					if (widget->isTabStop())
+					if (widget->isActive())
 					{
-						for (const auto& tabbedWidgets : this->windowWidgets)
-							if (tabbedWidgets->isTabStop())
-								tabbedWidgets->onTabStop(false);
-
-						widget->onTabStop(true);
-						this->pTabWidget = widget;
-						return true;
+						activeFlag = true;
+						activeId = widget->getWidgetID();
+						break;
 					}
+				}
+
+				if (!activeFlag)
+				{
+					for (auto it = this->windowWidgets.rbegin(); it != this->windowWidgets.rend(); ++it)
+					{
+						auto widget = (*it);
+
+						if (widget->isTabStop() && !widget->isActive())
+						{
+							for (const auto& tabbedWidgets : this->windowWidgets)
+								if (tabbedWidgets->isTabStop())
+									tabbedWidgets->onTabStop(false);
+
+							widget->onTabStop(true);
+							this->pTabWidget = widget;
+							return true;
+						}
+					}
+				}
+				else
+				{
+					auto idx{ -1 };
+					auto it = std::find_if(this->windowWidgets.rbegin(), this->windowWidgets.rend(), [&](Widget* pWidget) { return pWidget->getWidgetID() == activeId; });
+					for (const auto& tabbedWidgets : this->windowWidgets)
+						if (tabbedWidgets->isTabStop())
+							tabbedWidgets->onTabStop(false);
+
+					while (true)
+					{
+						it = std::next(it);
+						if (*it == nullptr)
+							it = std::rbegin(this->windowWidgets);
+						idx++;
+
+						if (idx >= static_cast<int>(this->windowWidgets.size()))
+						{
+							idx = -1;
+							it = std::rbegin(this->windowWidgets);
+							if ((*it)->isTabStop())
+								break;
+
+							continue;
+						}
+
+						if ((*it)->isTabStop())
+							break;
+					}
+					
+					(*it)->onTabStop(true);
+					this->pTabWidget = *it;
 				}
 			}
 		}

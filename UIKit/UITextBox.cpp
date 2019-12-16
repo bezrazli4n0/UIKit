@@ -737,7 +737,7 @@ namespace UIKit::UI
 			this->password ? this->passwordText.c_str() : this->text.c_str(),
 			static_cast<UINT32>(this->text.length()),
 			textFormat,
-			correctedWidth, (this->height < 0.0f ? 0.0f : this->height),
+			(correctedWidth < 0.0f ? 0.0f : correctedWidth), (this->height < 0.0f ? 0.0f : this->height),
 			&this->pTextLayout
 		);
 

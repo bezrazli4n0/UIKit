@@ -68,11 +68,11 @@ namespace UIKit
 			
 			int getZIndex() const;
 
-			bool isVisible() const;
-			bool isHandleMouse() const;
-			bool isHandleKeyboard() const;
-			bool isTabStop() const;
-			bool isActive() const;
+			virtual bool isVisible() const;
+			virtual bool isHandleMouse() const;
+			virtual bool isHandleKeyboard() const;
+			virtual bool isTabStop() const;
+			virtual bool isActive() const;
 
 			friend class Window;
 
