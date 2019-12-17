@@ -49,12 +49,16 @@ namespace UIKit::UI
 		this->radiusY = y;
 		this->recreateGeometry();
 	}
+
+	ID2D1RoundedRectangleGeometry* ClickObject::getGeometry()
+	{
+		return this->pRoundRectGeometry;
+	}
 	
-	bool ClickObject::checkMouse(const float& xPos, const float& yPos)
+	bool ClickObject::checkMouse(const float& xPos, const float& yPos, D2D1_MATRIX_3X2_F matrix)
 	{
 		BOOL contains{};
-		this->pRoundRectGeometry->FillContainsPoint(D2D1::Point2F(xPos, yPos), D2D1::Matrix3x2F::Identity(), &contains);
+		this->pRoundRectGeometry->FillContainsPoint(D2D1::Point2F(xPos, yPos), matrix, &contains);
 		return static_cast<bool>(contains);
 	}
 }
-

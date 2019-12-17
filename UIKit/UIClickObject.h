@@ -25,7 +25,9 @@ namespace UIKit
 			void setRadius(const float&& x, const float&& y);
 			void setRadius(const float& x, const float& y);
 
-			bool checkMouse(const float& xPos, const float& yPos);
+			ID2D1RoundedRectangleGeometry* getGeometry();
+
+			bool checkMouse(const float& xPos, const float& yPos, D2D1_MATRIX_3X2_F matrix = D2D1::Matrix3x2F::Identity());
 
 		};
 	}
