@@ -33,6 +33,7 @@ namespace UIKit::UI
 
 	void View::onAttach()
 	{
+		this->pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::DarkGray), &this->pBrush);
 		for (const auto& widget : this->viewWidgets)
 		{
 			widget->pRT = this->pRT;
@@ -42,6 +43,8 @@ namespace UIKit::UI
 
 	void View::onDetach()
 	{
+		Graphics::SafeRelease(&this->pBrush);
+
 		for (const auto& widget : this->viewWidgets)
 			widget->onDetach();
 	}
@@ -88,13 +91,20 @@ namespace UIKit::UI
 				this->thumbMatrix = this->thumbMatrix * D2D1::Matrix3x2F::Translation(0.0f, -curDelta);
 
 				const auto currentThumbValue = this->thumbMatrix.dy;
-				const auto currentThumbPercentage = currentThumbValue * 100.0f / this->widgetsHeight;
-				const auto currentHeight = this->widgetsHeight * currentThumbPercentage / 100.0f;
+				const auto currentThumbPercentage = currentThumbValue * 100.0f / this->height;
+				const auto currentHeight = (this->widgetsHeight - this->height) * currentThumbPercentage / 100.0f;
 
 				this->offsetY = -currentHeight;
 			}
-			this->lastCursorY = yPos;
+			this->lastCursorY = static_cast<float>(yPos);
 		}
+	}
+
+	void View::onMouseScroll(const int& xPos, const int& yPos, const short& delta)
+	{
+		for (const auto& widget : this->viewWidgets)
+			if (widget->isHandleMouse() && widget->isVisible())
+				widget->onMouseScroll(xPos, yPos, delta);
 	}
 
 	void View::calculateWidgetsHeight()
@@ -108,41 +118,37 @@ namespace UIKit::UI
 	{
 		BOOL contains{};
 		this->pThumRect->FillContainsPoint(D2D1::Point2F(static_cast<float>(xPos), static_cast<float>(yPos)), this->thumbMatrix, &contains);
+
+		if (!this->displayScrollBar)
+			return false;
+
 		return static_cast<bool>(contains);
 	}
 
 	void View::rereateThumbGeometry()
 	{
 		Graphics::SafeRelease(&this->pThumRect);
-		auto thumbHeight = std::ceilf(this->height / (this->widgetsHeight / this->height));
+		auto thumbHeight = this->height - (this->widgetsHeight - this->height);
 		if (thumbHeight < Graphics::pixelToDipY(30.0f))
 			thumbHeight = Graphics::pixelToDipY(30.0f);
-		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x + this->width, this->y, this->x + this->width + Graphics::pixelToDipX(15.0f), thumbHeight), 0.0f, 0.0f), &this->pThumRect);
+		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x + this->width, this->y, this->x + this->width + Graphics::pixelToDipX(6.0f), thumbHeight), 4.0f, 4.0f), &this->pThumRect);
 	}
 
 	void View::drawScrollbar()
 	{
-		ID2D1SolidColorBrush* pBrush{};
-		this->pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray), &pBrush);
-
-		this->pRT->FillRectangle(D2D1::RectF(this->x + this->width, this->y, this->x + this->width + Graphics::pixelToDipX(15.0f), this->y + this->height), pBrush);
-		
-		pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::Crimson));
 		this->pRT->SetTransform(this->thumbMatrix);
 		this->pRT->FillGeometry(this->pThumRect, pBrush);
 		this->pRT->SetTransform(D2D1::Matrix3x2F::Identity());
-
-		Graphics::SafeRelease(&pBrush);
 	}
 
-	View::View(const std::wstring&& viewID, const float&& width, const float&& height, const float&& x, const float&& y)
-		: Widget(viewID, width, height, x, y)
+	View::View(const std::wstring&& viewID, const bool&& scrollbar, const float&& width, const float&& height, const float&& x, const float&& y)
+		: displayScrollBar{scrollbar}, Widget(viewID, width, height, x, y)
 	{
 		this->handleMouse = true;
 	}
 
-	View::View(const std::wstring& viewID, const float& width, const float& height, const float& x, const float& y)
-		: Widget(viewID, width, height, x, y)
+	View::View(const std::wstring& viewID, const bool& scrollbar, const float& width, const float& height, const float& x, const float& y)
+		: displayScrollBar{ scrollbar }, Widget(viewID, width, height, x, y)
 	{
 		this->handleMouse = true;
 	}
@@ -150,6 +156,7 @@ namespace UIKit::UI
 	View::~View()
 	{
 		Graphics::SafeRelease(&this->pThumRect);
+		Graphics::SafeRelease(&this->pBrush);
 	}
 
 	void View::setOffset(const float&& x, const float&& y)

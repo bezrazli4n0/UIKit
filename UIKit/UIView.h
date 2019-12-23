@@ -14,6 +14,7 @@ namespace UIKit
 			float offsetX{}, offsetY{}, widgetsHeight{}, lastCursorY{};
 			bool displayScrollBar{ true }, thumbPressed{};
 			ID2D1RoundedRectangleGeometry* pThumRect{};
+			ID2D1SolidColorBrush* pBrush{};
 			D2D1_MATRIX_3X2_F thumbMatrix{ D2D1::Matrix3x2F::Identity() };
 
 		private:
@@ -26,6 +27,7 @@ namespace UIKit
 			virtual void onMouseDown(const int& xPos, const int& yPos);
 			virtual void onMouseUp(const int& xPos, const int& yPos);
 			virtual void onMouseMove(const int& xPos, const int& yPos);
+			virtual void onMouseScroll(const int& xPos, const int& yPos, const short& delta);
 
 			void calculateWidgetsHeight();
 			bool cursorInThumb(const int& xPos, const int& yPos);
@@ -33,8 +35,8 @@ namespace UIKit
 			void drawScrollbar();
 
 		public:
-			View(const std::wstring&& viewID, const float&& width, const float&& height, const float&& x = 0.0f, const float&& y = 0.0f);
-			View(const std::wstring& viewID, const float& width, const float& height, const float& x = 0.0f, const float& y = 0.0f);
+			View(const std::wstring&& viewID, const bool&& scrollbar = true, const float&& width = 0.0f, const float&& height = 0.0f, const float&& x = 0.0f, const float&& y = 0.0f);
+			View(const std::wstring& viewID, const bool& scrollbar = true, const float& width = 0.0f, const float& height = 0.0f, const float& x = 0.0f, const float& y = 0.0f);
 			~View();
 
 			void setOffset(const float&& x = 0.0f, const float&& y = 0.0f);
