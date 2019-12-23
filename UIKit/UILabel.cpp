@@ -11,27 +11,41 @@ namespace UIKit::UI
 	void Label::render()
 	{
 		IDWriteTextFormat* pTextFormat{};
+		IDWriteTextLayout* pTextLayout{};
 		Graphics::Core::getDWriteFactory()->CreateTextFormat(this->fontName.c_str(), nullptr, this->fontWeight, this->fontStyle, DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_NORMAL, Graphics::pixelToDipY(this->fontSize), L"", &pTextFormat);
-	
+		
 		pTextFormat->SetTextAlignment(this->horizontalAlign);
 		pTextFormat->SetParagraphAlignment(this->verticalAlign);
+		
+		Graphics::Core::getDWriteFactory()->CreateTextLayout(this->labelText.c_str(), this->labelText.length(), pTextFormat, this->width, this->height, &pTextLayout);
 
 		this->pBrush->SetColor(this->textColor);
-
-		this->pRT->DrawText(this->labelText.c_str(), this->labelText.length(), pTextFormat, D2D1::RectF(std::ceilf(this->x), std::ceilf(this->y), std::ceilf(this->x + this->width), std::ceilf (this->y + this->height)), this->pBrush);
+		//this->pRT->DrawText(this->labelText.c_str(), this->labelText.length(), pTextFormat, D2D1::RectF(std::ceilf(this->x), std::ceilf(this->y), std::ceilf(this->x + this->width), std::ceilf (this->y + this->height)), this->pBrush);
+		if (this->colorRange.pos != 0 && this->colorRange.len != 0)
+		{
+			DWRITE_TEXT_RANGE textRange{ this->colorRange.pos, this->colorRange.len };
+			this->pRangeBrush->SetColor(this->textColorInRange);
+			pTextLayout->SetDrawingEffect(this->pRangeBrush, textRange);
+		}
+		this->pRT->DrawTextLayout(D2D1::Point2F(this->x, this->y), pTextLayout, this->pBrush);
 
 		Graphics::SafeRelease(&pTextFormat);
+		Graphics::SafeRelease(&pTextLayout);
 	}
 
 	void Label::onAttach()
 	{
 		Graphics::SafeRelease(&this->pBrush);
 		this->pRT->CreateSolidColorBrush(this->textColor, &this->pBrush);
+
+		Graphics::SafeRelease(&this->pRangeBrush);
+		this->pRT->CreateSolidColorBrush(this->textColorInRange, &this->pRangeBrush);
 	}
 
 	void Label::onDetach()
 	{
 		Graphics::SafeRelease(&this->pBrush);
+		Graphics::SafeRelease(&this->pRangeBrush);
 	}
 
 	Label::Label(const std::wstring&& labelID, const std::wstring&& labelText, const float&& fontSize, const float&& width, const float&& height, const float&& x, const float&& y)
@@ -47,6 +61,7 @@ namespace UIKit::UI
 	Label::~Label()
 	{
 		Graphics::SafeRelease(&this->pBrush);
+		Graphics::SafeRelease(&this->pRangeBrush);
 	}
 
 	void Label::draw()
@@ -111,6 +126,18 @@ namespace UIKit::UI
 	void Label::setTextColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a)
 	{
 		this->textColor = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+	}
+
+	void Label::setTextColorRange(const textColorRange&& colorRange, const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a)
+	{
+		this->colorRange = colorRange;
+		this->textColorInRange = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+	}
+
+	void Label::setTextColorRange(const textColorRange& colorRange, const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a)
+	{
+		this->colorRange = colorRange;
+		this->textColorInRange = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
 	}
 
 	void Label::setTextAlignment(const hAlign&& horizontal, const vAlign&& vertical)
@@ -333,5 +360,10 @@ namespace UIKit::UI
 			}
 			break;
 		}
+	}
+
+	std::wstring Label::getText() const
+	{
+		return this->labelText;
 	}
 }

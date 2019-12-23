@@ -41,6 +41,11 @@ namespace UIKit
 				Oblique
 			};
 
+			struct textColorRange
+			{
+				unsigned int pos{}, len{};
+			};
+
 		private:
 			virtual void update();
 			virtual void render();
@@ -51,12 +56,13 @@ namespace UIKit
 		private:
 			std::wstring labelText{ L"" }, fontName{ L"Arial" };
 			float fontSize{};
-			D2D1_COLOR_F textColor{ D2D1::ColorF(D2D1::ColorF::Black) };
+			D2D1_COLOR_F textColor{ D2D1::ColorF(D2D1::ColorF::Black) }, textColorInRange{ D2D1::ColorF(D2D1::ColorF::Black) };
 			DWRITE_TEXT_ALIGNMENT horizontalAlign{};
 			DWRITE_PARAGRAPH_ALIGNMENT verticalAlign{};
-			ID2D1SolidColorBrush* pBrush{};
+			ID2D1SolidColorBrush* pBrush{}, * pRangeBrush{};
 			DWRITE_FONT_WEIGHT fontWeight{ DWRITE_FONT_WEIGHT::DWRITE_FONT_WEIGHT_REGULAR };
 			DWRITE_FONT_STYLE fontStyle{ DWRITE_FONT_STYLE::DWRITE_FONT_STYLE_NORMAL };
+			textColorRange colorRange{};
 
 		public:
 			Label(const std::wstring&& labelID, const std::wstring&& labelText = L"Label", const float&& fontSize = 12.0f, const float&& width = 100.0f, const float&& height = 100.0f, const float&& x = 0.0f, const float&& y = 0.0f);
@@ -77,6 +83,9 @@ namespace UIKit
 			void setTextColor(const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a = 255);
 			void setTextColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a = 255);
 
+			void setTextColorRange(const textColorRange&& colorRange, const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a = 255);
+			void setTextColorRange(const textColorRange& colorRange, const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a = 255);
+
 			void setTextAlignment(const hAlign&& horizontal, const vAlign&& vertical);
 			void setTextAlignment(const hAlign& horizontal, const vAlign& vertical);
 
@@ -85,6 +94,8 @@ namespace UIKit
 
 			void setFontStyle(const style&& fontStyle);
 			void setFontStyle(const style& fontStyle);
+
+			std::wstring getText() const;
 
 		};
 	}

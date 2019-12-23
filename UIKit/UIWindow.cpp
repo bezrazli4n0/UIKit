@@ -269,6 +269,22 @@ namespace UIKit::UI
 
 	void Window::update()
 	{
+		if (this->windowLayout != nullptr)
+		{
+			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
+			{
+				if (widgetInfo.pWidget->isVisible())
+					widgetInfo.pWidget->update();
+			}
+		}
+		else
+		{
+			for (const auto& widget : this->windowWidgets)
+			{
+				if (widget->isVisible())
+					widget->update();
+			}
+		}
 	}
 
 	void Window::render()
@@ -281,10 +297,7 @@ namespace UIKit::UI
 			for (const auto& widgetInfo : this->windowLayout->widgetCollection)
 			{
 				if (widgetInfo.pWidget->isVisible())
-				{
-					widgetInfo.pWidget->update();
 					widgetInfo.pWidget->render();
-				}
 			}
 		}
 		else
@@ -292,10 +305,7 @@ namespace UIKit::UI
 			for (const auto& widget : this->windowWidgets)
 			{
 				if (widget->isVisible())
-				{
-					widget->update();
 					widget->render();
-				}
 			}
 		}
 
