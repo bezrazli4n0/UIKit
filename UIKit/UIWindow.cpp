@@ -447,11 +447,11 @@ namespace UIKit::UI
 			case WM_PAINT:
 			{
 				PAINTSTRUCT ps{};
-				BeginPaint(hWnd, &ps);
+				BeginPaint(this->windowHandle, &ps);
 
 				this->updateWindow();
 
-				EndPaint(hWnd, &ps);
+				EndPaint(this->windowHandle, &ps);
 			}
 			return 0;
 
