@@ -75,6 +75,7 @@ namespace UIKit
 			virtual bool isActive() const;
 
 			friend class Window;
+			friend class View;
 
 		};
 

@@ -150,6 +150,7 @@
     <ClInclude Include="UIRectangle.h" />
     <ClInclude Include="UIRenderer.h" />
     <ClInclude Include="UITextBox.h" />
+    <ClInclude Include="UIView.h" />
     <ClInclude Include="UIWidget.h" />
     <ClInclude Include="UIWindow.h" />
   </ItemGroup>
@@ -164,6 +165,7 @@
     <ClCompile Include="UIRectangle.cpp" />
     <ClCompile Include="UIRenderer.cpp" />
     <ClCompile Include="UITextBox.cpp" />
+    <ClCompile Include="UIView.cpp" />
     <ClCompile Include="UIWidget.cpp" />
     <ClCompile Include="UIWindow.cpp" />
   </ItemGroup>
