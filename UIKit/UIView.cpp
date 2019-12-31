@@ -33,7 +33,7 @@ namespace UIKit::UI
 
 	void View::onAttach()
 	{
-		this->pRT->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::DarkGray), &this->pBrush);
+		this->pRT->CreateSolidColorBrush(this->scrollBarColor, &this->pBrush);
 		for (const auto& widget : this->viewWidgets)
 		{
 			widget->pRT = this->pRT;
@@ -117,7 +117,10 @@ namespace UIKit::UI
 	bool View::cursorInThumb(const int& xPos, const int& yPos)
 	{
 		BOOL contains{};
-		this->pThumRect->FillContainsPoint(D2D1::Point2F(static_cast<float>(xPos), static_cast<float>(yPos)), this->thumbMatrix, &contains);
+		if (this->pThumRect != nullptr)
+			this->pThumRect->FillContainsPoint(D2D1::Point2F(static_cast<float>(xPos), static_cast<float>(yPos)), this->thumbMatrix, &contains);
+		else
+			return false;
 
 		if (!this->displayScrollBar)
 			return false;
@@ -131,13 +134,14 @@ namespace UIKit::UI
 		auto thumbHeight = this->height - (this->widgetsHeight - this->height);
 		if (thumbHeight < Graphics::pixelToDipY(30.0f))
 			thumbHeight = Graphics::pixelToDipY(30.0f);
-		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x + this->width, this->y, this->x + this->width + Graphics::pixelToDipX(6.0f), thumbHeight), 4.0f, 4.0f), &this->pThumRect);
+		Graphics::Core::getFactory()->CreateRoundedRectangleGeometry(D2D1::RoundedRect(D2D1::RectF(this->x + this->width + Graphics::pixelToDipX(2.0f), this->y, this->x + this->width + Graphics::pixelToDipX(this->scrollBarWidth) + Graphics::pixelToDipX(2.0f), this->y + thumbHeight), this->scrollBarRadiusX, this->scrollBarRadiusY), &this->pThumRect);
 	}
 
 	void View::drawScrollbar()
 	{
 		this->pRT->SetTransform(this->thumbMatrix);
-		this->pRT->FillGeometry(this->pThumRect, pBrush);
+		this->pBrush->SetColor(this->scrollBarColor);
+		this->pRT->FillGeometry(this->pThumRect, this->pBrush);
 		this->pRT->SetTransform(D2D1::Matrix3x2F::Identity());
 	}
 
@@ -157,6 +161,40 @@ namespace UIKit::UI
 	{
 		Graphics::SafeRelease(&this->pThumRect);
 		Graphics::SafeRelease(&this->pBrush);
+	}
+
+	void View::setScrollBarRadius(const float&& radius)
+	{
+		this->scrollBarRadiusX = this->scrollBarRadiusY = radius;
+		this->rereateThumbGeometry();
+	}
+
+	void View::setScrollBarRadius(const float& radius)
+	{
+		this->scrollBarRadiusX = this->scrollBarRadiusY = radius;
+		this->rereateThumbGeometry();
+	}
+
+	void View::setScrollBarWidth(const float&& width)
+	{
+		this->scrollBarWidth = width;
+		this->rereateThumbGeometry();
+	}
+
+	void View::setScrollBarWidth(const float& width)
+	{
+		this->scrollBarWidth = width;
+		this->rereateThumbGeometry();
+	}
+
+	void View::setScrollBarColor(const uint8_t&& r, const uint8_t&& g, const uint8_t&& b, const uint8_t&& a)
+	{
+		this->scrollBarColor = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+	}
+
+	void View::setScrollBarColor(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a)
+	{
+		this->scrollBarColor = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
 	}
 
 	void View::setOffset(const float&& x, const float&& y)
